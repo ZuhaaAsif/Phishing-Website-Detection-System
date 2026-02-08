@@ -6,6 +6,24 @@ Workflow 1 - Website Authentication
 
 Workflow 2 - User Reviews
 
+Features and functionalities:
+1. User authentication
+2. Input validation
+3. Review storage
+4. Rating system
+5. Feedback messages
+
+Step-by-step description:
+1. User goes to the web application's Home Page.
+2. User navigate to the Reviews tab.
+3. User clicks on the "Post a Review" button.
+4. User is prompted to sign in via email if they're not already logged in.
+5. Website displays the Review posting form after successful user authentication.
+6. User fills in the fields with the URL of the website they want to post a review  about, write their review, and enter a rating for that website.
+7. User clicks on the Submit button.
+8. Website stores the review in the database after successful validation.
+9. System displays a success message: "Your review has been recorded.".
+
 
 Workflow 3 - Search reviews of specific websites
 
