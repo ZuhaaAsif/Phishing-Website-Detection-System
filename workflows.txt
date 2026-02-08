@@ -3,6 +3,19 @@ Workflows for Phishing Website Detection System
 
 Workflow 1 - Website Authentication
 
+Key Features:
+Website URL input field
+URL format validation
+Website security & authenticity analysis
+Overall authenticity score generation
+Detailed analysis report display
+Risk status indication (Safe / Suspicious / Unsafe)
+
+Step by Step Description:
+User enters website's home page
+User enters Domain/URL of the website they want to authenticate in the search bar
+User clicks on authenticate button
+User receives an analysis report for the website they have entered
 
 Workflow 2 - User Reviews
 
