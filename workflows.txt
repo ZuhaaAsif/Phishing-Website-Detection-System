@@ -17,8 +17,41 @@ Step by Step Description:
 3. User clicks on authenticate button
 4. User receives an analysis report for the website they have entered
 
+
 Workflow 2 - User Reviews
 
+Features and functionalities:
+1. User authentication
+2. Input validation
+3. Review storage
+4. Rating system
+5. Feedback messages
+
+Step-by-step description:
+1. User goes to the web application's Home Page.
+2. User navigate to the Reviews tab.
+3. User clicks on the "Post a Review" button.
+4. User is prompted to sign in via email if they're not already logged in.
+5. Website displays the Review posting form after successful user authentication.
+6. User fills in the fields with the URL of the website they want to post a review  about, write their review, and enter a rating for that website.
+7. User clicks on the Submit button.
+8. Website stores the review in the database after successful validation.
+9. System displays a success message: "Your review has been recorded.".
 
 
 Workflow 3 - Search reviews of specific websites
+
+Features and functionalities:
+1. Search feature
+2. Query processing
+3. Search results display
+4. Website's review page retrieval
+5. Navigation and redirection
+
+Step-by-step description:
+1. User goes to the web application's Home Page.
+2. User navigates to the Explore tab.
+3. User enters URL or Keywords for the website they want to look up.
+4. System gives back websites that best match the request.
+5. User clicks on the website they want to check reviews for.
+6. System redirects to a page displaying all reviews for that website.
