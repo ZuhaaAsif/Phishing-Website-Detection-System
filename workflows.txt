@@ -1,0 +1,10 @@
+Workflows for Phishing Website Detection System
+
+
+Workflow 1 - Website Authentication
+
+
+Workflow 2 - User Reviews
+
+
+Workflow 3 - Search reviews of specific websites
