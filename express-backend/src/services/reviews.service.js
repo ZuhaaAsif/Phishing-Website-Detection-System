@@ -96,4 +96,21 @@ const deleteReview = async (id) => {
   return prisma.reviews.delete({ where: { review_id: id } });
 };
 
-module.exports = { getAllReviews, getReviewById, createReview, updateReview, deleteReview };
+const getReviewsByWebsiteDomain = async (domain) =>
+  prisma.reviews.findMany({
+    where: {
+      websites: {
+        domain: {
+          equals: domain,
+          mode: "insensitive",
+        },
+      },
+    },
+    include: {
+      users: { select: { user_id: true, username: true, email: true } },
+      websites: { select: { website_id: true, website_name: true, url: true, riskScore: true, security_rate: true } },
+    },
+    orderBy: { review_id: "desc" },
+  });
+
+module.exports = { getAllReviews, getReviewById, createReview, updateReview, deleteReview, getReviewsByWebsiteDomain };

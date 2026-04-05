@@ -9,7 +9,7 @@
  * DELETE /api/websites/:id       → delete
  */
 const { Router }   = require("express");
-const { body, param } = require("express-validator");
+const { body, param, query } = require("express-validator");
 const ctrl         = require("../controllers/websites.controller");
 const validate     = require("../middleware/validate.middleware");
 
@@ -17,6 +17,7 @@ const router = Router();
 
 // Reusable validators
 const idParam    = param("id").isInt({ min: 1 }).withMessage("id must be a positive integer");
+const searchQuery = query("q").trim().notEmpty().withMessage("query parameter q is required");
 const bodyRules  = [
   body("website_name").trim().notEmpty().withMessage("website_name is required"),
   body("url").trim().isURL().withMessage("url must be a valid URL"),
@@ -27,10 +28,12 @@ const bodyRules  = [
   body("analysisDetails").optional()
 ];
 
-router.get(  "/",    ctrl.getAll);
-router.get(  "/:id", [idParam], validate, ctrl.getOne);
-router.post( "/",    bodyRules,  validate, ctrl.create);
-router.put(  "/:id", [idParam, ...bodyRules], validate, ctrl.update);
-router.delete("/:id",[idParam], validate, ctrl.remove);
+router.get("/", ctrl.getAll);
+router.get("/search", [searchQuery], validate, ctrl.search);
+router.get("/domain/:domain", [param("domain").trim().notEmpty().withMessage("domain is required")], validate, ctrl.getByDomain);
+router.get("/:id", [idParam], validate, ctrl.getOne);
+router.post("/", bodyRules, validate, ctrl.create);
+router.put("/:id", [idParam, ...bodyRules], validate, ctrl.update);
+router.delete("/:id", [idParam], validate, ctrl.remove);
 
 module.exports = router;

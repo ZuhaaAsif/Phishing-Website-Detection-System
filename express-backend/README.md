@@ -1,6 +1,30 @@
-# Express + PostgreSQL + Prisma — Backend Boilerplate
+# Phishing Website Detection System - Backend API
 
-A modular, production-ready REST API starter using **Express.js**, **PostgreSQL**, and **Prisma ORM**.
+A comprehensive REST API for detecting phishing websites using advanced analysis techniques including URL heuristics, typosquatting detection, and Google Safe Browsing integration. Features user authentication, website reviews, and risk assessment.
+
+---
+
+## Features
+
+### Core Functionality
+- **URL Risk Analysis**: Advanced phishing detection using multiple analysis methods
+- **User Authentication**: JWT-based authentication with secure password hashing
+- **Website Reviews**: Authenticated user reviews and ratings
+- **Search & Discovery**: Find websites by domain, URL, or name
+- **Risk Persistence**: Store and retrieve website analysis results
+
+### Security Features
+- **Rate Limiting**: Protect against abuse (8 auth requests/min, 20 reviews/min)
+- **Input Validation**: Comprehensive validation using express-validator
+- **CORS & Security Headers**: Helmet and CORS middleware
+- **JWT Authentication**: Secure token-based authentication
+- **Password Security**: bcrypt hashing with salt rounds
+
+### Analysis Methods
+- **URL Heuristics**: Detect suspicious patterns (IP addresses, @ symbols, etc.)
+- **Typosquatting Detection**: Identify domain impersonation attempts
+- **Google Safe Browsing**: External threat intelligence integration
+- **Risk Scoring**: Comprehensive risk assessment (0-100 scale)
 
 ---
 
@@ -9,41 +33,37 @@ A modular, production-ready REST API starter using **Express.js**, **PostgreSQL*
 ```
 express-backend/
 ├── prisma/
-│   ├── schema.prisma        # Data models → edit this to define your schema
-│   └── seed.js              # Dev seed data
+│   ├── schema.prisma        # Database schema (users, websites, reviews)
+│   ├── seed.js              # Sample data for development
+│   └── migrations/          # Database migration files
 ├── src/
-│   ├── app.js               # Express app setup, middleware, route mounting
-│   ├── index.js             # Legacy route definitions for quick prototyping
+│   ├── app.js               # Express app setup and route mounting
 │   ├── server.js            # Server startup and database connection
-│   ├── routes/              # URL definitions & validators
-│   │   ├── analysis.js
-│   │   ├── item.routes.js
-│   │   ├── reviews.routes.js
-│   │   ├── user.routes.js
-│   │   └── websites.routes.js
-│   ├── controllers/         # HTTP layer — reads req, writes res
-│   │   ├── analysis.controller.js
-│   │   ├── item.controller.js
-│   │   ├── reviews.controller.js
-│   │   ├── user.controller.js
-│   │   └── websites.controller.js
-│   ├── services/            # Business logic (no req/res here)
-│   │   ├── analysis.service.js
-│   │   ├── db.service.js    # Prisma singleton
-│   │   ├── helpers.js
-│   │   ├── item.db.service.js
-│   │   ├── item.service.js
-│   │   ├── reviews.service.js
-│   │   ├── user.service.js
-│   │   └── websites.service.js
-│   ├── middleware/
-│   │   ├── error.middleware.js    # 404 + global error handler
-│   │   └── validate.middleware.js # express-validator runner
-│   └── utils/
-│       ├── prisma.js
-│       └── response.js
-├── .env.example
-├── package.json
+│   ├── routes/              # API route definitions
+│   │   ├── analysis.js      # URL analysis endpoints
+│   │   ├── reviews.routes.js # Review CRUD operations
+│   │   ├── user.routes.js   # User authentication & management
+│   │   └── websites.routes.js # Website search & management
+│   ├── controllers/         # HTTP request handlers
+│   │   ├── analysis.controller.js # Analysis logic
+│   │   ├── reviews.controller.js  # Review operations
+│   │   ├── user.controller.js     # User management
+│   │   └── websites.controller.js # Website operations
+│   ├── services/            # Business logic layer
+│   │   ├── analysis.service.js    # Phishing detection algorithms
+│   │   ├── reviews.service.js     # Review business logic
+│   │   ├── user.service.js        # User authentication & management
+│   │   └── websites.service.js    # Website CRUD operations
+│   ├── middleware/          # Express middleware
+│   │   ├── auth.middleware.js     # JWT authentication
+│   │   ├── error.middleware.js    # Error handling
+│   │   ├── rate-limit.middleware.js # Rate limiting
+│   │   └── validate.middleware.js # Input validation
+│   └── utils/               # Utility functions
+│       ├── prisma.js        # Legacy Prisma client
+│       └── response.js      # Response helpers
+├── .env                     # Environment configuration
+├── package.json             # Dependencies and scripts
 └── README.md
 ```
 
@@ -51,26 +71,32 @@ express-backend/
 
 ## Quick Start
 
+### Prerequisites
+- Node.js 16+
+- PostgreSQL 12+
+- npm or yarn
+
+### Installation
+
 ```bash
-# 1. Install dependencies
+# 1. Clone and navigate to backend
+cd express-backend
+
+# 2. Install dependencies
 npm install
 
-# 2. Configure environment
+# 3. Set up environment variables
 cp .env.example .env
-# → Edit .env and set DATABASE_URL
+# Edit .env with your database URL and other settings
 
-# 3. Push schema to database & generate Prisma client
-npm run db:migrate   # creates migrations + generates client
-# OR for quick prototyping (no migration files):
-npx prisma db push
+# 4. Set up database
+npm run db:migrate   # Create migrations and generate Prisma client
+npm run db:seed      # Populate with sample data
 
-# 4. (Optional) Seed the database
-npm run db:seed
-
-# 5. Start dev server with hot-reload
+# 5. Start development server
 npm run dev
 
-# 6. Open Prisma Studio (visual DB browser)
+# 6. (Optional) Open Prisma Studio for database inspection
 npm run db:studio
 ```
 
@@ -80,399 +106,388 @@ Server runs at **http://localhost:3000** by default.
 
 ## Environment Variables
 
-| Variable       | Example                                               | Required |
-|----------------|-------------------------------------------------------|----------|
-| `DATABASE_URL` | `postgresql://user:pass@localhost:5432/mydb?schema=public` | ✅ |
-| `PORT`         | `3000`                                                | optional |
-| `NODE_ENV`     | `development` / `production`                          | optional |
-| `CORS_ORIGINS` | `http://localhost:5173,https://myapp.com`             | optional |
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | ✅ | - |
+| `PORT` | Server port | ❌ | `3000` |
+| `NODE_ENV` | Environment mode | ❌ | `development` |
+| `CORS_ORIGINS` | Allowed CORS origins (comma-separated) | ❌ | `*` |
+| `JWT_SECRET` | JWT signing secret | ✅ | - |
+| `JWT_EXPIRY` | JWT token expiry | ❌ | `2h` |
+| `GOOGLE_SAFE_BROWSING_API_KEY` | Google Safe Browsing API key | ❌ | - |
 
 ---
 
 ## API Reference
 
-All responses follow this envelope:
+All API responses follow this envelope:
 
 ```json
-{ "success": true,  "data": { ... } }
-{ "success": false, "message": "Error description" }
+{ "success": true, "data": { ... } }
+{ "success": false, "error": "Error message" }
 ```
 
-### Health
+### Authentication
 
-| Method | Endpoint  | Description    |
-|--------|-----------|----------------|
-| GET    | /health   | Liveness check |
+Most endpoints require authentication. Include the JWT token in the `Authorization` header:
+
+```
+Authorization: Bearer <your-jwt-token>
+```
 
 ---
 
-### Items — `/api/items`
+## Analysis Endpoints
 
-#### `GET /api/items`
-List all items (paginated).
+### `POST /api/analyze`
+Analyze a URL for phishing risks.
 
-**Query params:** `page` (default 1), `limit` (default 20)
+**Request Body:**
+```json
+{
+  "url": "https://example.com"
+}
+```
 
-**Response 200**
+**Response 200:**
 ```json
 {
   "success": true,
-  "data": {
-    "items": [
-      {
-        "id": 1,
-        "title": "First Item",
-        "description": "Hello world",
-        "published": true,
-        "createdAt": "2024-04-01T10:00:00.000Z",
-        "updatedAt": "2024-04-01T10:00:00.000Z",
-        "author": { "id": 1, "name": "Alice", "email": "alice@example.com" }
+  "analysis": {
+    "url": "https://example.com",
+    "authenticity_score": 85,
+    "risk_status": "SAFE",
+    "risk_color": "green",
+    "risk_icon": "✅",
+    "risk_message": "This website appears to be legitimate.",
+    "risk_action": "ALLOW",
+    "analysis_details": {
+      "url_heuristics": {
+        "score": 15,
+        "issues_found": ["Contains suspicious keyword: login"],
+        "issue_count": 1,
+        "breakdown": { "basic_heuristics": 15, "typosquatting": 0 },
+        "typosquatting_detected": false
+      },
+      "google_safe_browsing": {
+        "status": "clean",
+        "message": "URL not found in threat database"
       }
+    },
+    "recommendations": [
+      "Website appears safe to visit",
+      "Always keep your browser updated"
     ],
-    "total": 1,
-    "page": 1,
-    "limit": 20,
-    "pages": 1
+    "analyzed_at": "2026-04-05T10:30:00.000Z"
+  },
+  "website": {
+    "website_id": 1,
+    "website_name": "example.com",
+    "url": "https://example.com",
+    "domain": "example.com",
+    "riskScore": 85,
+    "security_rate": 5,
+    "reputation": "clean"
   }
 }
 ```
 
 ---
 
-#### `GET /api/items/:id`
-Get a single item.
+## User Management
 
-**Response 200** — same shape as one item above  
-**Response 404** — `{ "success": false, "message": "Item not found" }`
+### `POST /api/users`
+Register a new user.
 
----
-
-#### `POST /api/items`
-Create a new item.
-
-**Request body**
+**Request Body:**
 ```json
 {
-  "title": "My Item",          // required
-  "description": "Details",   // optional
-  "published": false,          // optional, default false
-  "authorId": 1                // optional
+  "email": "user@example.com",
+  "username": "johndoe",
+  "password": "securepassword123"
 }
 ```
 
-**Response 201**
-```json
-{ "success": true, "data": { "id": 2, "title": "My Item", ... } }
-```
-
-**Response 422 (validation failure)**
-```json
-{
-  "success": false,
-  "message": "Validation failed",
-  "errors": [{ "field": "title", "message": "title is required" }]
-}
-```
-
----
-
-#### `PUT /api/items/:id`
-Full update of an item.
-
-**Request body** — same fields as POST (all required again for PUT)
-
-**Response 200** — updated item  
-**Response 404** — item not found
-
----
-
-#### `DELETE /api/items/:id`
-Delete an item.
-
-**Response 200**
-```json
-{ "success": true, "message": "Item deleted" }
-```
-
----
-
-### Users — `/api/users`
-
-#### `GET /api/users`
-List all users.
-
-**Response 200**
-```json
-{
-  "success": true,
-  "data": [
-    { "id": 1, "name": "Alice", "email": "alice@example.com", "createdAt": "..." }
-  ]
-}
-```
-
----
-
-#### `GET /api/users/:id`
-Get a single user with their items.
-
-**Response 200**
+**Response 201:**
 ```json
 {
   "success": true,
   "data": {
-    "id": 1,
-    "name": "Alice",
-    "email": "alice@example.com",
-    "items": [ { "id": 1, "title": "First Item", ... } ]
+    "user_id": 1,
+    "username": "johndoe",
+    "email": "user@example.com",
+    "last_active": "2026-04-05T10:30:00.000Z"
+  }
+}
+```
+
+### `POST /api/users/login`
+Authenticate user and get JWT token.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword123"
+}
+```
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "user": {
+      "user_id": 1,
+      "username": "johndoe",
+      "email": "user@example.com",
+      "last_active": "2026-04-05T10:30:00.000Z"
+    }
+  }
+}
+```
+
+### `GET /api/users/me`
+Get current user profile (requires authentication).
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "user_id": 1,
+    "username": "johndoe",
+    "email": "user@example.com",
+    "last_active": "2026-04-05T10:30:00.000Z",
+    "reviews": [
+      {
+        "review_id": 1,
+        "review": "Great website!",
+        "rate": 5,
+        "websites": {
+          "website_name": "example.com",
+          "url": "https://example.com"
+        }
+      }
+    ]
   }
 }
 ```
 
 ---
 
-#### `POST /api/users`
-Create a user.
+## Website Management
 
-**Request body**
-```json
-{ "email": "bob@example.com", "name": "Bob" }
-```
+### `GET /api/websites`
+List all websites (with optional search).
 
-**Response 201** — created user  
-**Response 409** — email already in use
+**Query Parameters:**
+- `q`: Search query (searches URL, domain, name)
 
----
-
-#### `PUT /api/users/:id`
-Update a user.
-
-**Request body** — same as POST
-
-**Response 200** — updated user
-
----
-
-#### `DELETE /api/users/:id`
-Delete a user.
-
-**Response 200**
-```json
-{ "success": true, "message": "User deleted" }
-```
-
----
-
-### Websites — `/api/websites`
-
-#### `GET /api/websites`
-List all websites.
-
-**Response 200**
+**Response 200:**
 ```json
 {
   "success": true,
   "data": [
     {
       "website_id": 1,
-      "website_name": "Example Site",
-      "url": "https://example.com",
-      "domain": "example.com",
-      "createdAt": "2026-04-05T10:00:00.000Z",
-      "lastChecked": "2026-04-05T10:00:00.000Z",
-      "riskScore": 85,
-      "security_rate": 4,
-      "reputation": "Good",
-      "analysisDetails": {}
+      "website_name": "Google",
+      "url": "https://www.google.com",
+      "domain": "google.com",
+      "riskScore": 95,
+      "security_rate": 5,
+      "reputation": "clean",
+      "lastChecked": "2026-04-05T10:30:00.000Z"
     }
   ]
 }
 ```
 
----
+### `GET /api/websites/search`
+Search websites by query.
 
-#### `GET /api/websites/:id`
-Get a single website.
+**Query Parameters:**
+- `q`: Search term (required)
 
-**Response 200** — same shape as one website above  
-**Response 404** — `{ "success": false, "message": "Website not found" }`
+**Response 200:** Same as above.
 
----
+### `GET /api/websites/domain/:domain`
+Get website details by domain (includes reviews).
 
-#### `POST /api/websites`
-Create a new website.
-
-**Request body**
+**Response 200:**
 ```json
 {
-  "website_name": "Example Site",
-  "url": "https://example.com",
-  "domain": "example.com",
-  "riskScore": 85,
-  "security_rate": 4,
-  "reputation": "Good",
-  "analysisDetails": {}
+  "success": true,
+  "data": {
+    "website_id": 1,
+    "website_name": "Google",
+    "url": "https://www.google.com",
+    "domain": "google.com",
+    "riskScore": 95,
+    "security_rate": 5,
+    "reputation": "clean",
+    "analysisDetails": { ... },
+    "reviews": [
+      {
+        "review_id": 1,
+        "review": "Great search engine!",
+        "rate": 5,
+        "users": {
+          "username": "johndoe",
+          "email": "user@example.com"
+        }
+      }
+    ]
+  }
 }
 ```
 
-**Response 201**
-```json
-{ "success": true, "data": { "website_id": 1, "website_name": "Example Site", ... } }
-```
-
-**Response 422 (validation failure)**
-```json
-{
-  "success": false,
-  "message": "Validation failed",
-  "errors": [{ "field": "url", "message": "url must be a valid URL" }]
-}
-```
-
 ---
 
-#### `PUT /api/websites/:id`
-Update a website.
+## Reviews Management
 
-**Request body** — same fields as POST
+### `GET /api/reviews`
+List all reviews.
 
-**Response 200** — updated website  
-**Response 404** — website not found
-
----
-
-#### `DELETE /api/websites/:id`
-Delete a website.
-
-**Response 200**
-```json
-{ "success": true, "message": "Website deleted successfully" }
-```
-
----
-
-### Reviews — `/api/reviews`
-
-#### `GET /api/reviews`
-List all reviews with user and website details.
-
-**Response 200**
+**Response 200:**
 ```json
 {
   "success": true,
   "data": [
     {
       "review_id": 1,
-      "review": "This website is very secure!",
+      "review": "Great website!",
       "rate": 5,
-      "users": {
-        "user_id": 1,
-        "username": "testuser",
-        "email": "test@example.com"
-      },
-      "websites": {
-        "website_id": 1,
-        "website_name": "Example Site",
-        "url": "https://example.com"
-      }
+      "website_id": 1,
+      "user_id": 1,
+      "users": { "username": "johndoe" },
+      "websites": { "website_name": "Google" }
     }
   ]
 }
 ```
 
----
+### `GET /api/reviews/domain/:domain`
+Get all reviews for a specific domain.
 
-#### `GET /api/reviews/:id`
-Get a single review.
+**Response 200:** Array of reviews as above.
 
-**Response 200** — same shape as one review above  
-**Response 404** — `{ "success": false, "message": "Review not found" }`
+### `POST /api/reviews`
+Create a new review (requires authentication).
 
----
-
-#### `POST /api/reviews`
-Create a new review.
-
-**Request body**
+**Request Body:**
 ```json
 {
-  "review": "This website is very secure!",
+  "review": "This website is excellent!",
   "website_id": 1,
-  "user_id": 1,
   "rate": 5
 }
 ```
 
-**Response 201**
-```json
-{ "success": true, "data": { "review_id": 1, "review": "This website is very secure!", ... } }
-```
-
-**Response 422 (validation failure)**
+**Response 201:**
 ```json
 {
-  "success": false,
-  "message": "Validation failed",
-  "errors": [{ "field": "rate", "message": "rate must be between 1 and 5" }]
+  "success": true,
+  "message": "Your review has been recorded",
+  "data": {
+    "review_id": 2,
+    "review": "This website is excellent!",
+    "rate": 5,
+    "user_id": 1
+  }
+}
+```
+
+### `PUT /api/reviews/:id`
+Update a review (requires authentication, owner only).
+
+**Request Body:**
+```json
+{
+  "review": "Updated review text",
+  "rate": 4
+}
+```
+
+### `DELETE /api/reviews/:id`
+Delete a review (requires authentication, owner only).
+
+---
+
+## Health Check
+
+### `GET /health`
+Check server health.
+
+**Response 200:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-04-05T10:30:00.000Z"
 }
 ```
 
 ---
 
-#### `PUT /api/reviews/:id`
-Update a review.
+## Security Features
 
-**Request body** — same fields as POST
+### Rate Limiting
+- **Authentication endpoints**: 8 requests per minute
+- **Review endpoints**: 20 requests per minute
 
-**Response 200** — updated review  
-**Response 404** — review not found
+### Authentication
+- JWT tokens with configurable expiry
+- Password hashing using bcrypt
+- Secure token validation
+
+### Input Validation
+- All inputs validated using express-validator
+- SQL injection protection via Prisma ORM
+- XSS protection via input sanitization
 
 ---
 
-#### `DELETE /api/reviews/:id`
-Delete a review.
+## Database Schema
 
-**Response 200**
-```json
-{ "success": true, "message": "Review deleted successfully" }
+### Users
+```sql
+- user_id: Primary Key
+- username: String (unique)
+- email: String (unique)
+- password: String (hashed)
+- last_active: DateTime
+```
+
+### Websites
+```sql
+- website_id: Primary Key
+- website_name: String (unique)
+- url: String (unique)
+- domain: String
+- riskScore: Float
+- security_rate: Integer (1-5)
+- reputation: String
+- analysisDetails: JSON
+- createdAt: DateTime
+- lastChecked: DateTime
+```
+
+### Reviews
+```sql
+- review_id: Primary Key
+- review: String
+- website_id: Foreign Key
+- user_id: Foreign Key
+- rate: Integer (1-5)
 ```
 
 ---
 
-## Where to Make Changes
+##  Testing
 
-### Adding a new resource (e.g. `Product`)
-
-1. **`prisma/schema.prisma`** — add a `model Product { ... }` block, then run `npm run db:migrate`.
-2. **`src/services/product.service.js`** — copy `item.service.js`, swap `prisma.item` for `prisma.product`.
-3. **`src/controllers/product.controller.js`** — copy `item.controller.js`, import the new service.
-4. **`src/routes/product.routes.js`** — copy `item.routes.js`, update validators and controller import.
-5. **`src/app.js`** — add `app.use("/api/products", require("./routes/product.routes"))`.
-
-### Adding authentication
-
-Add an `auth.middleware.js` in `src/middleware/` that verifies a JWT, then apply it per-route:
-```js
-router.post("/", authMiddleware, bodyRules, validate, ctrl.create);
+# Manual API testing with curl
+curl -X POST http://localhost:3000/api/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}'
 ```
-
-### Changing the response format
-
-Edit the `res.json(...)` calls in `src/controllers/` — they're the only place that constructs HTTP responses.
-
-### Adding business rules
-
-Put them in the relevant `src/services/` file. Controllers must stay thin.
-
----
-
-## npm Scripts
-
-| Script            | What it does                              |
-|-------------------|-------------------------------------------|
-| `npm run dev`     | Start server with nodemon (hot-reload)    |
-| `npm start`       | Start server (production)                 |
-| `npm run db:migrate` | Create & apply a new Prisma migration  |
-| `npm run db:generate` | Regenerate Prisma client after schema changes |
-| `npm run db:studio`  | Open Prisma Studio (visual DB browser) |
-| `npm run db:seed`    | Populate DB with seed data             |

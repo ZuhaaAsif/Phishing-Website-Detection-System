@@ -210,23 +210,11 @@ class AnalysisService {
     }
   }
 
-  // NEW METHOD: Extract domain from URL
-  extractDomain(url) {
-    try {
-      let domain = url.replace(/^https?:\/\//i, '');
-      domain = domain.split('/')[0];
-      domain = domain.split(':')[0];
-      return domain;
-    } catch (error) {
-      return url;
-    }
-  }
-
   // Main analysis method - orchestrates everything
     // Main analysis method - orchestrates everything (UPDATED with external APIs)
   async analyzeWebsite(url) {
-    // Step 1: Run heuristic analysis
-    const heuristic = this.analyzeURL(url);
+    // Step 1: Run heuristic analysis with typosquatting detection
+    const heuristic = this.analyzeURLWithTyposquatting(url);
     
     // Step 2: Call Google Safe Browsing API
     const googleResult = await this.checkGoogleSafeBrowsing(url);
@@ -265,7 +253,9 @@ class AnalysisService {
         url_heuristics: {
           score: heuristic.score,
           issues_found: heuristic.issues,
-          issue_count: heuristic.issueCount
+          issue_count: heuristic.issueCount,
+          breakdown: heuristic.breakdown || null,
+          typosquatting_detected: heuristic.hasTyposquatting || false
         },
         google_safe_browsing: {
           status: googleResult.safe ? "clean" : "malicious",

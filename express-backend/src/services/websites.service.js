@@ -6,15 +6,58 @@
 const prisma = require("./db.service");
 
 /** Return all websites. */
-const getAllWebsites = async () =>
+const getAllWebsites = async ({ search } = {}) =>
   prisma.websites.findMany({
-    orderBy: { createdAt: "desc" }
+    where: search
+      ? {
+          OR: [
+            { url: { contains: search, mode: "insensitive" } },
+            { domain: { contains: search, mode: "insensitive" } },
+            { website_name: { contains: search, mode: "insensitive" } },
+          ],
+        }
+      : undefined,
+    orderBy: { createdAt: "desc" },
   });
 
 /** Return a single website by ID, or null if not found. */
 const getWebsiteById = async (id) =>
   prisma.websites.findUnique({
-    where: { website_id: id }
+    where: { website_id: id },
+    include: {
+      reviews: {
+        include: {
+          users: { select: { user_id: true, username: true, email: true } },
+        },
+      },
+    },
+  });
+
+const getWebsiteByDomain = async (domain) =>
+  prisma.websites.findFirst({
+    where: { domain: { equals: domain, mode: "insensitive" } },
+    include: {
+      reviews: {
+        include: {
+          users: { select: { user_id: true, username: true, email: true } },
+        },
+      },
+    },
+  });
+
+const searchWebsites = async (query) =>
+  prisma.websites.findMany({
+    where: {
+      OR: [
+        { url: { contains: query, mode: "insensitive" } },
+        { domain: { contains: query, mode: "insensitive" } },
+        { website_name: { contains: query, mode: "insensitive" } },
+      ],
+    },
+    include: {
+      reviews: false,
+    },
+    orderBy: { createdAt: "desc" },
   });
 
 /** Create and return a new website. */
@@ -27,8 +70,8 @@ const createWebsite = async ({ website_name, url, domain, riskScore, security_ra
       riskScore: riskScore || null,
       security_rate: security_rate || null,
       reputation: reputation || null,
-      analysisDetails: analysisDetails || null
-    }
+      analysisDetails: analysisDetails || null,
+    },
   });
 };
 
@@ -42,7 +85,7 @@ const updateWebsite = async (id, data) => {
   }
   return prisma.websites.update({
     where: { website_id: id },
-    data
+    data,
   });
 };
 
@@ -57,4 +100,4 @@ const deleteWebsite = async (id) => {
   return prisma.websites.delete({ where: { website_id: id } });
 };
 
-module.exports = { getAllWebsites, getWebsiteById, createWebsite, updateWebsite, deleteWebsite };
+module.exports = { getAllWebsites, getWebsiteById, getWebsiteByDomain, searchWebsites, createWebsite, updateWebsite, deleteWebsite };

@@ -34,6 +34,28 @@ const create = async (req, res, next) => {
   }
 };
 
+const login = async (req, res, next) => {
+  try {
+    const { token, user } = await userService.authenticateUser(req.body);
+    res.json({ success: true, data: { token, user } });
+  } catch (err) {
+    if (err.statusCode === 401 || err.statusCode === 404) {
+      return res.status(err.statusCode || 401).json({ success: false, error: err.message });
+    }
+    next(err);
+  }
+};
+
+const getProfile = async (req, res, next) => {
+  try {
+    const user = await userService.getUserById(Number(req.user.user_id));
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    res.json({ success: true, data: user });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const update = async (req, res, next) => {
   try {
     const user = await userService.updateUser(Number(req.params.id), req.body);
@@ -58,4 +80,4 @@ const remove = async (req, res, next) => {
   }
 };
 
-module.exports = { getAll, getOne, create, update, remove };
+module.exports = { getAll, getOne, create, login, getProfile, update, remove };

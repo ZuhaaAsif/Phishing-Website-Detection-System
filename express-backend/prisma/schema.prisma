@@ -21,8 +21,9 @@ model reviews {
 model users {
   user_id     Int       @id @default(autoincrement())
   username    String    @db.VarChar(255)
-  last_active DateTime? @db.Time(6)
   email       String    @unique @db.VarChar(255)
+  password    String    @db.VarChar(255)
+  last_active DateTime? @db.Time(6)
   reviews     reviews[]
   websites    websites[]
 }
