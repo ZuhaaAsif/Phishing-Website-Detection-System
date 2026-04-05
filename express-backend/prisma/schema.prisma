@@ -24,9 +24,10 @@ model users {
   last_active DateTime? @db.Time(6)
   email       String    @unique @db.VarChar(255)
   reviews     reviews[]
+  websites    websites[]
 }
 
-model Website {
+model websites {
   website_id              Int      @id @default(autoincrement())
   website_name  String    @unique @db.VarChar(255)
   url             String   @unique
@@ -39,5 +40,5 @@ model Website {
   analysisDetails Json?
   reviews       reviews[]
   userId          Int?
-  User            User?    @relation(fields: [userId], references: [id])
+  User            users?    @relation(fields: [userId], references: [user_id])
 }

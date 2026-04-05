@@ -12,21 +12,36 @@ express-backend/
 │   ├── schema.prisma        # Data models → edit this to define your schema
 │   └── seed.js              # Dev seed data
 ├── src/
-│   ├── index.js             # Entry point — starts the HTTP server
 │   ├── app.js               # Express app setup, middleware, route mounting
+│   ├── index.js             # Legacy route definitions for quick prototyping
+│   ├── server.js            # Server startup and database connection
 │   ├── routes/              # URL definitions & validators
+│   │   ├── analysis.js
 │   │   ├── item.routes.js
-│   │   └── user.routes.js
+│   │   ├── reviews.routes.js
+│   │   ├── user.routes.js
+│   │   └── websites.routes.js
 │   ├── controllers/         # HTTP layer — reads req, writes res
+│   │   ├── analysis.controller.js
 │   │   ├── item.controller.js
-│   │   └── user.controller.js
+│   │   ├── reviews.controller.js
+│   │   ├── user.controller.js
+│   │   └── websites.controller.js
 │   ├── services/            # Business logic (no req/res here)
+│   │   ├── analysis.service.js
 │   │   ├── db.service.js    # Prisma singleton
+│   │   ├── helpers.js
+│   │   ├── item.db.service.js
 │   │   ├── item.service.js
-│   │   └── user.service.js
-│   └── middleware/
-│       ├── error.middleware.js    # 404 + global error handler
-│       └── validate.middleware.js # express-validator runner
+│   │   ├── reviews.service.js
+│   │   ├── user.service.js
+│   │   └── websites.service.js
+│   ├── middleware/
+│   │   ├── error.middleware.js    # 404 + global error handler
+│   │   └── validate.middleware.js # express-validator runner
+│   └── utils/
+│       ├── prisma.js
+│       └── response.js
 ├── .env.example
 ├── package.json
 └── README.md
@@ -244,6 +259,182 @@ Delete a user.
 **Response 200**
 ```json
 { "success": true, "message": "User deleted" }
+```
+
+---
+
+### Websites — `/api/websites`
+
+#### `GET /api/websites`
+List all websites.
+
+**Response 200**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "website_id": 1,
+      "website_name": "Example Site",
+      "url": "https://example.com",
+      "domain": "example.com",
+      "createdAt": "2026-04-05T10:00:00.000Z",
+      "lastChecked": "2026-04-05T10:00:00.000Z",
+      "riskScore": 85,
+      "security_rate": 4,
+      "reputation": "Good",
+      "analysisDetails": {}
+    }
+  ]
+}
+```
+
+---
+
+#### `GET /api/websites/:id`
+Get a single website.
+
+**Response 200** — same shape as one website above  
+**Response 404** — `{ "success": false, "message": "Website not found" }`
+
+---
+
+#### `POST /api/websites`
+Create a new website.
+
+**Request body**
+```json
+{
+  "website_name": "Example Site",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "riskScore": 85,
+  "security_rate": 4,
+  "reputation": "Good",
+  "analysisDetails": {}
+}
+```
+
+**Response 201**
+```json
+{ "success": true, "data": { "website_id": 1, "website_name": "Example Site", ... } }
+```
+
+**Response 422 (validation failure)**
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": [{ "field": "url", "message": "url must be a valid URL" }]
+}
+```
+
+---
+
+#### `PUT /api/websites/:id`
+Update a website.
+
+**Request body** — same fields as POST
+
+**Response 200** — updated website  
+**Response 404** — website not found
+
+---
+
+#### `DELETE /api/websites/:id`
+Delete a website.
+
+**Response 200**
+```json
+{ "success": true, "message": "Website deleted successfully" }
+```
+
+---
+
+### Reviews — `/api/reviews`
+
+#### `GET /api/reviews`
+List all reviews with user and website details.
+
+**Response 200**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "review_id": 1,
+      "review": "This website is very secure!",
+      "rate": 5,
+      "users": {
+        "user_id": 1,
+        "username": "testuser",
+        "email": "test@example.com"
+      },
+      "websites": {
+        "website_id": 1,
+        "website_name": "Example Site",
+        "url": "https://example.com"
+      }
+    }
+  ]
+}
+```
+
+---
+
+#### `GET /api/reviews/:id`
+Get a single review.
+
+**Response 200** — same shape as one review above  
+**Response 404** — `{ "success": false, "message": "Review not found" }`
+
+---
+
+#### `POST /api/reviews`
+Create a new review.
+
+**Request body**
+```json
+{
+  "review": "This website is very secure!",
+  "website_id": 1,
+  "user_id": 1,
+  "rate": 5
+}
+```
+
+**Response 201**
+```json
+{ "success": true, "data": { "review_id": 1, "review": "This website is very secure!", ... } }
+```
+
+**Response 422 (validation failure)**
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": [{ "field": "rate", "message": "rate must be between 1 and 5" }]
+}
+```
+
+---
+
+#### `PUT /api/reviews/:id`
+Update a review.
+
+**Request body** — same fields as POST
+
+**Response 200** — updated review  
+**Response 404** — review not found
+
+---
+
+#### `DELETE /api/reviews/:id`
+Delete a review.
+
+**Response 200**
+```json
+{ "success": true, "message": "Review deleted successfully" }
 ```
 
 ---

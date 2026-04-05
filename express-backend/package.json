@@ -2,10 +2,10 @@
   "name": "express-backend",
   "version": "1.0.0",
   "description": "Express.js + PostgreSQL + Prisma backend boilerplate",
-  "main": "src/index.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
