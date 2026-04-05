@@ -1,49 +1,98 @@
 /**
  * src/services/user.service.js
  * Business logic layer for Users.
+ * Schema: user_id, username, email, last_active
  */
 const prisma = require("./db.service");
 
 const getAllUsers = async () =>
-  prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-    select: { id: true, name: true, email: true, createdAt: true },
+  prisma.users.findMany({
+    orderBy: { user_id: "asc" },
+    select: { 
+      user_id: true, 
+      username: true, 
+      email: true, 
+      last_active: true 
+    },
   });
 
 const getUserById = async (id) =>
-  prisma.user.findUnique({
-    where: { id },
-    include: { items: { orderBy: { createdAt: "desc" } } },
+  prisma.users.findUnique({
+    where: { user_id: id },
+    include: { 
+      reviews: {
+        include: {
+          websites: true
+        }
+      } 
+    },
   });
 
-const createUser = async ({ name, email }) => {
-  const existing = await prisma.user.findUnique({ where: { email } });
+const createUser = async ({ username, email, last_active }) => {
+  // Check if email already exists
+  const existing = await prisma.users.findUnique({ 
+    where: { email } 
+  });
+  
   if (existing) {
     const err = new Error("Email already in use");
     err.statusCode = 409;
     throw err;
   }
-  return prisma.user.create({ data: { name, email } });
+  
+  // Create new user
+  return prisma.users.create({ 
+    data: { 
+      username, 
+      email, 
+      last_active: last_active || new Date().toTimeString().split(' ')[0]
+    } 
+  });
 };
 
 const updateUser = async (id, data) => {
-  const exists = await prisma.user.findUnique({ where: { id } });
+  // Check if user exists
+  const exists = await prisma.users.findUnique({ 
+    where: { user_id: id } 
+  });
+  
   if (!exists) {
     const err = new Error("User not found");
     err.statusCode = 404;
     throw err;
   }
-  return prisma.user.update({ where: { id }, data });
+  
+  // Update user
+  return prisma.users.update({ 
+    where: { user_id: id }, 
+    data: {
+      username: data.username,
+      email: data.email,
+      last_active: data.last_active
+    }
+  });
 };
 
 const deleteUser = async (id) => {
-  const exists = await prisma.user.findUnique({ where: { id } });
+  // Check if user exists
+  const exists = await prisma.users.findUnique({ 
+    where: { user_id: id } 
+  });
+  
   if (!exists) {
     const err = new Error("User not found");
     err.statusCode = 404;
     throw err;
   }
-  return prisma.user.delete({ where: { id } });
+  
+  // Delete user (reviews will be deleted due to cascade? If not, handle it)
+  return prisma.users.delete({ where: { user_id: id } });
 };
 
-module.exports = { getAllUsers, getUserById, createUser, updateUser, deleteUser };
+module.exports = { 
+  getAllUsers, 
+  getUserById, 
+  createUser, 
+  updateUser, 
+  deleteUser 
+};

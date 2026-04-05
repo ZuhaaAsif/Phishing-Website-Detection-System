@@ -3,7 +3,7 @@
  * Mounts at /api/users (see app.js)
  *
  * GET    /api/users           → list all
- * GET    /api/users/:id       → get one (includes their items)
+ * GET    /api/users/:id       → get one (includes their reviews)
  * POST   /api/users           → create
  * PUT    /api/users/:id       → update
  * DELETE /api/users/:id       → delete
@@ -15,10 +15,13 @@ const validate        = require("../middleware/validate.middleware");
 
 const router = Router();
 
-const idParam   = param("id").isInt({ min: 1 }).withMessage("id must be a positive integer");
+const idParam = param("id").isInt({ min: 1 }).withMessage("id must be a positive integer");
+
+// Updated to match schema: username instead of name
 const bodyRules = [
   body("email").isEmail().normalizeEmail().withMessage("valid email required"),
-  body("name").optional().trim().isString(),
+  body("username").optional().trim().isString().withMessage("username must be a string"),
+  body("last_active").optional().isString().withMessage("last_active must be a time string"),
 ];
 
 router.get(  "/",    ctrl.getAll);

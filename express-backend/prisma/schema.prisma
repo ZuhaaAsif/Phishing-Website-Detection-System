@@ -26,9 +26,18 @@ model users {
   reviews     reviews[]
 }
 
-model websites {
-  website_id    Int       @id @default(autoincrement())
+model Website {
+  website_id              Int      @id @default(autoincrement())
   website_name  String    @unique @db.VarChar(255)
+  url             String   @unique
+  domain          String
+  createdAt       DateTime @default(now())
+  lastChecked     DateTime @updatedAt
+  riskScore       Float?
   security_rate Int?
+  reputation      String?
+  analysisDetails Json?
   reviews       reviews[]
+  userId          Int?
+  User            User?    @relation(fields: [userId], references: [id])
 }
