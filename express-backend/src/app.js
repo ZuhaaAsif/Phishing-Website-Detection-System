@@ -7,8 +7,11 @@ const cors    = require("cors");
 const helmet  = require("helmet");
 const morgan  = require("morgan");
 
-const itemRoutes = require("./routes/item.routes");
+const reviewRoutes = require("./routes/reviews.routes");
+const websiteRoutes = require("./routes/websites.routes");
+const analysisRoutes = require("./routes/analysis");
 const userRoutes = require("./routes/user.routes");
+const quizRoutes = require("./routes/quiz.routes");
 const { notFound, errorHandler } = require("./middleware/error.middleware");
 
 const app = express();
@@ -34,8 +37,11 @@ app.get("/health", (_req, res) =>
 );
 
 // ── API routes ────────────────────────────────────────────
-app.use("/api/items", itemRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/websites", websiteRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api", analysisRoutes);
+app.use("/api/quiz", quizRoutes);
 
 // ── Error handling (must be last) ────────────────────────
 app.use(notFound);
