@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebAware - User Reviews</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="/" class="nav-icon" id="homeBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-5v-8H7v8H5a2 2 0 0 1-2-2z"/>
+                </svg>
+            </a>
+            <button class="nav-btn" id="postReviewBtnNav">✍️ Post a Review</button>
+            <button class="nav-btn" id="exploreBtn">🔍 Explore</button>
+        </div>
+        
+        <div class="nav-right">
+            <div id="userInfo" class="user-info hidden">
+                <div class="profile-trigger" id="profileTrigger">
+                    <div class="profile-avatar" id="profileAvatar">
+                        <span id="avatarText"></span>
+                    </div>
+                    <span id="userName"></span>
+                    <i class="fas fa-chevron-down" style="font-size: 12px; margin-left: 5px;"></i>
+                </div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="dropdown-header">
+                        <div class="dropdown-avatar" id="dropdownAvatar">
+                            <span id="dropdownAvatarText"></span>
+                        </div>
+                        <div class="dropdown-user-info">
+                            <div class="dropdown-username" id="dropdownUsername"></div>
+                            <div class="dropdown-email" id="dropdownEmail"></div>
+                        </div>
+                    </div>
+                    <hr class="dropdown-divider">
+                    <button class="dropdown-item" id="myReviewsBtn">
+                        <i class="fas fa-star"></i> My Reviews
+                    </button>
+                    <button class="dropdown-item" id="settingsBtn">
+                        <i class="fas fa-cog"></i> Settings
+                    </button>
+                    <hr class="dropdown-divider">
+                    <button class="dropdown-item logout-item" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+            <button class="nav-btn signin-btn" id="signInBtn">Sign In</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="reviews-main-content">
+        <div class="reviews-page-container">
+            <!-- Add Review Section -->
+            <div class="add-review-page-section">
+                <button id="addReviewMainBtn" class="add-review-main-btn">
+                    <div class="plus-icon-large">+</div>
+                    <span class="add-review-text">Add a Review</span>
+                </button>
+            </div>
+
+            <!-- My Reviews Section -->
+            <div id="myReviewsSection" class="my-reviews-section hidden">
+                <h2 class="section-title">
+                    <i class="fas fa-star"></i> My Reviews
+                </h2>
+                <div id="myReviewsList" class="reviews-grid"></div>
+            </div>
+
+            <!-- All Reviews Section -->
+            <div id="allReviewsSection" class="all-reviews-section">
+                <h2 class="section-title">
+                    <i class="fas fa-users"></i> Community Reviews
+                </h2>
+                <div id="allReviewsList" class="reviews-grid"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Review Modal -->
+    <div id="reviewModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="modal-close">&times;</span>
+            <div style="padding: 20px;">
+                <h2 style="color: #667eea; margin-bottom: 20px;">✍️ Post a Review</h2>
+                <form id="reviewForm">
+                    <div class="form-group">
+                        <label for="reviewWebsiteUrl">Website URL *</label>
+                        <input type="url" id="reviewWebsiteUrl" class="form-input" placeholder="https://example.com" required>
+                        <small>Enter the full URL of the website you want to review</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reviewRating">Rating *</label>
+                        <div class="rating-stars">
+                            <i class="far fa-star" data-rating="1"></i>
+                            <i class="far fa-star" data-rating="2"></i>
+                            <i class="far fa-star" data-rating="3"></i>
+                            <i class="far fa-star" data-rating="4"></i>
+                            <i class="far fa-star" data-rating="5"></i>
+                        </div>
+                        <input type="hidden" id="reviewRating" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reviewText">Your Review</label>
+                        <textarea id="reviewText" class="form-input" rows="4" placeholder="Share your experience with this website..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="auth-btn" style="width: 100%;">Submit Review</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="modal-close">&times;</span>
+            <div style="padding: 20px;">
+                <h2 style="color: #667eea; margin-bottom: 20px;">Sign In</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginEmail">Email Address</label>
+                        <input type="email" id="loginEmail" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" class="form-input" required>
+                    </div>
+                    <button type="submit" class="auth-btn" style="width: 100%;">Sign In</button>
+                </form>
+                <div style="text-align: center; margin-top: 15px;">
+                    <p>Don't have an account? <a href="#" id="showRegisterBtn">Register here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="modal-close">&times;</span>
+            <div style="padding: 20px;">
+                <h2 style="color: #667eea; margin-bottom: 20px;">Create Account</h2>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="registerUsername">Username</label>
+                        <input type="text" id="registerUsername" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email Address</label>
+                        <input type="email" id="registerEmail" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password</label>
+                        <input type="password" id="registerPassword" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerConfirmPassword">Confirm Password</label>
+                        <input type="password" id="registerConfirmPassword" class="form-input" required>
+                    </div>
+                    <button type="submit" class="auth-btn" style="width: 100%;">Register</button>
+                </form>
+                <div style="text-align: center; margin-top: 15px;">
+                    <p>Already have an account? <a href="#" id="showLoginBtn">Sign In</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/reviews-page.js"></script>
+</body>
+</html>

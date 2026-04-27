@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model reviews {
+  review_id  Int       @id @default(autoincrement())
+  review     String?
+  website_id Int?
+  user_id    Int?
+  rate       Int?
+  users      users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  websites   websites? @relation(fields: [website_id], references: [website_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  user_id     Int       @id @default(autoincrement())
+  username    String    @db.VarChar(255)
+  email       String    @unique @db.VarChar(255)
+  password    String    @db.VarChar(255)
+  last_active DateTime? @db.Time(6)
+  reviews     reviews[]
+  websites    websites[]
+}
+
+model websites {
+  website_id              Int      @id @default(autoincrement())
+  website_name  String    @unique @db.VarChar(255)
+  url             String   @unique
+  domain          String
+  createdAt       DateTime @default(now())
+  lastChecked     DateTime @updatedAt
+  riskScore       Float?
+  security_rate Int?
+  reputation      String?
+  analysisDetails Json?
+  reviews       reviews[]
+  userId          Int?
+  User            users?    @relation(fields: [userId], references: [user_id])
+}
