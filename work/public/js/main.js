@@ -23,16 +23,32 @@ const dropdownUsername = document.getElementById('dropdownUsername');
 const dropdownEmail = document.getElementById('dropdownEmail');
 const myReviewsBtn = document.getElementById('myReviewsBtn');
 const settingsBtn = document.getElementById('settingsBtn');
+const quizBtn = document.getElementById("quizBtn");
+const quizContainer = document.getElementById("quizContainer");
+const mainContent = document.querySelector(".hero-section");
 
 let currentAnalysisData = null;
 let currentUser = null;
 let selectedRating = 0;
 let currentDomain = null;
+let quizData = [];
 
 // Check for existing session on load
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthStatus();
     setupReviewForm();
+});
+
+quizBtn.addEventListener("click", () => {
+  mainContent.style.display = "none";
+  quizContainer.classList.remove("hidden");
+
+  loadQuiz(); // your quiz logic function
+});
+
+document.getElementById("quitQuizBtn").addEventListener("click", () => {
+  quizContainer.classList.add("hidden");
+  mainContent.style.display = "block";
 });
 
 // Close dropdown when clicking outside
@@ -700,4 +716,13 @@ function resetForms() {
     updateRatingStars(0);
 }
 
+function loadQuiz() {
+  fetch("/api/quiz/challenges") // your Express route
+    .then(res => res.json())
+    .then(data => {
+      quizData = data.data || data;
+      startQuiz();
+    })
+    .catch(err => console.error(err));
+}
 console.log('WebAware frontend loaded successfully');

@@ -11,6 +11,7 @@ const reviewRoutes = require("./routes/reviews.routes");
 const websiteRoutes = require("./routes/websites.routes");
 const analysisRoutes = require("./routes/analysis");
 const userRoutes = require("./routes/user.routes");
+const quizRoutes = require("./routes/quiz.routes");
 const { notFound, errorHandler } = require("./middleware/error.middleware");
 const frontendAnalysisRoutes = require("./routes/frontendAnalysis.routes");
 
@@ -43,14 +44,23 @@ app.use("/api/websites", websiteRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api", analysisRoutes);
 app.use("/api/frontend", frontendAnalysisRoutes);
+app.use("/api/quiz", quizRoutes);
+
 
 // Serve static files from public directory
 const path = require('path');
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Handle SPA routing - serve index.html for all other routes
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+app.get('*', (req, res, next) => {
+  if (
+    req.path.startsWith('/api') ||
+    req.path.startsWith('/images')
+  ) {
+    return next(); // let static or API handle it
+  }
+
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // ── Error handling ────────────────────────

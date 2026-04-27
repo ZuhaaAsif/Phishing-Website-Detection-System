@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Spot the Phish</title>
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+    }
+
+    #container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .flag {
+      position: absolute;
+      border: 2px dashed red;
+      cursor: pointer;
+    }
+
+    .found {
+      border: 3px solid green;
+    }
+
+    #feedback {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .correct {
+      background: #d4edda;
+    }
+
+    .wrong {
+      background: #f8d7da;
+    }
+
+    #badge {
+      background: gold;
+      padding: 20px;
+      border-radius: 10px;
+      display: none;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Spot the Phish 🕵️</h2>
+<p id="progress"></p>
+
+<div id="container">
+  <img id="challengeImage" width="600">
+</div>
+
+<div id="feedback"></div>
+
+<br>
+<button onclick="nextChallenge()">Next Challenge</button>
+<button onclick="nextChallenge()">Skip / See Solution</button>
+
+<div id="badge">
+  <h2>🎉 You Passed!</h2>
+  <p>🛡️ Safety Certificate Badge</p>
+</div>
+
+<script>
+let challenges = [];
+let current = 0;
+let foundFlags = [];
+
+// Fetch from backend
+fetch("http://localhost:3000/api/quiz/challenges")
+  .then(res => res.json())
+  .then(data => {
+    challenges = data;
+    loadChallenge();
+  })
+  .catch(err => console.error(err));
+
+function loadChallenge() {
+  const container = document.getElementById("container");
+  const img = document.getElementById("challengeImage");
+
+  container.querySelectorAll(".flag").forEach(e => e.remove());
+
+  foundFlags = [];
+  document.getElementById("feedback").style.display = "none";
+
+  const challenge = challenges[current];
+  document.getElementById("progress").innerText =
+    `Challenge ${current + 1} of ${challenges.length}`;
+
+ img.onload = () => {
+  challenge.red_flags.forEach(flag => {
+    const div = document.createElement("div");
+    div.classList.add("flag");
+
+    const imgWidth = img.clientWidth;
+    const imgHeight = img.clientHeight;
+
+    div.style.left = (flag.x_percent / 100) * imgWidth + "px";
+    div.style.top = (flag.y_percent / 100) * imgHeight + "px";
+    div.style.width = (flag.width_percent / 100) * imgWidth + "px";
+    div.style.height = (flag.height_percent / 100) * imgHeight + "px";
+
+    div.onclick = () => handleClick(flag, div);
+
+    container.appendChild(div);
+  });
+};
+
+img.src = "http://localhost:3000" + challenge.screenshot_url.replace("/public", "");  challenge.red_flags.forEach(flag => {
+    const div = document.createElement("div");
+    div.classList.add("flag");
+
+    const imgWidth = img.clientWidth;
+const imgHeight = img.clientHeight;
+
+div.style.left = (flag.x_percent / 100) * imgWidth + "px";
+div.style.top = (flag.y_percent / 100) * imgHeight + "px";
+div.style.width = (flag.width_percent / 100) * imgWidth + "px";
+div.style.height = (flag.height_percent / 100) * imgHeight + "px";
+
+    div.onclick = () => handleClick(flag, div);
+
+    container.appendChild(div);
+  });
+}
+
+function handleClick(flag, element) {
+  const feedback = document.getElementById("feedback");
+
+  if (!foundFlags.includes(flag.red_flag_id)) {
+    foundFlags.push(flag.red_flag_id);
+    element.classList.add("found");
+
+    feedback.className = "correct";
+    feedback.innerText = flag.explanation;
+    feedback.style.display = "block";
+  } else {
+    feedback.className = "wrong";
+    feedback.innerText = "Already found this one!";
+    feedback.style.display = "block";
+
+    element.style.animation = "shake 0.3s";
+    setTimeout(() => element.style.animation = "", 300);
+  }
+
+  if (foundFlags.length === challenges[current].red_flags.length) {
+    alert("All flags found!");
+  }
+}
+
+function nextChallenge() {
+  if (current < challenges.length - 1) {
+    current++;
+    loadChallenge();
+  } else {
+    document.getElementById("container").style.display = "none";
+    document.getElementById("badge").style.display = "block";
+  }
+}
+</script>
+
+</body>
+</html>

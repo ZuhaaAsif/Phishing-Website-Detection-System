@@ -26,6 +26,7 @@ model users {
   last_active DateTime? @db.Time(6)
   reviews     reviews[]
   websites    websites[]
+  quiz_sessions  quiz_sessions[]
 }
 
 model websites {
@@ -42,4 +43,78 @@ model websites {
   reviews       reviews[]
   userId          Int?
   User            users?    @relation(fields: [userId], references: [user_id])
+}
+
+// A single "Spot the Phish" challenge (fake-site scenario)
+model quiz_challenges {
+  challenge_id    Int               @id @default(autoincrement())
+  challenge_order Int               @unique            // 1 | 2 | 3 — display order
+  title           String            @db.VarChar(255)
+  description     String?
+  fake_url        String            @db.VarChar(512)   // e.g. "m1crosoft.com/login"
+  real_url        String            @db.VarChar(512)   // e.g. "microsoft.com"
+  screenshot_url  String?           @db.VarChar(512)   // path/URL to fake-site image
+  difficulty      String            @default("medium") @db.VarChar(50)
+  created_at      DateTime          @default(now())
+
+  red_flags       quiz_red_flags[]
+  attempts        quiz_attempts[]
+}
+
+// Each clickable "red flag" region within a challenge screenshot
+model quiz_red_flags {
+  flag_id       Int              @id @default(autoincrement())
+  challenge_id  Int
+  label         String           @db.VarChar(255)   // short name shown on badge
+  explanation   String                               // popover / knowledge text
+  element_type  String           @db.VarChar(100)   // "url" | "padlock" | "sender" | "content" | "cta"
+  // Bounding-box coords as % of image dimensions (0-100) for responsive layout
+  x_percent     Float
+  y_percent     Float
+  width_percent Float
+  height_percent Float
+
+  challenge     quiz_challenges  @relation(fields: [challenge_id], references: [challenge_id], onDelete: Cascade)
+  clicks        quiz_flag_clicks[]
+}
+
+// One quiz run per user (covers all 3 challenges)
+model quiz_sessions {
+  session_id         Int             @id @default(autoincrement())
+  user_id            Int?
+  started_at         DateTime        @default(now())
+  completed_at       DateTime?
+  flags_found        Int             @default(0)
+  certificate_earned Boolean         @default(false)
+
+  users              users?          @relation(fields: [user_id], references: [user_id], onDelete: SetNull)
+  attempts           quiz_attempts[]
+}
+
+// One attempt per challenge within a session
+model quiz_attempts {
+  attempt_id    Int              @id @default(autoincrement())
+  session_id    Int
+  challenge_id  Int
+  completed     Boolean          @default(false)
+  used_solution Boolean          @default(false)  // true if user clicked "See Solution"
+  flags_found   Int              @default(0)
+  started_at    DateTime         @default(now())
+  completed_at  DateTime?
+
+  session       quiz_sessions    @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
+  challenge     quiz_challenges  @relation(fields: [challenge_id], references: [challenge_id])
+  flag_clicks   quiz_flag_clicks[]
+}
+
+// Every click the user makes during an attempt
+model quiz_flag_clicks {
+  click_id    Int              @id @default(autoincrement())
+  attempt_id  Int
+  flag_id     Int?             // null → wrong area clicked
+  is_correct  Boolean
+  clicked_at  DateTime         @default(now())
+
+  attempt     quiz_attempts    @relation(fields: [attempt_id], references: [attempt_id], onDelete: Cascade)
+  flag        quiz_red_flags?  @relation(fields: [flag_id], references: [flag_id], onDelete: SetNull)
 }

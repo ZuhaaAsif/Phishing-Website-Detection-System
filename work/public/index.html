@@ -19,6 +19,7 @@
             </a>
             <button class="nav-btn" id="postReviewBtn">✍️ Post a Review</button>
             <button class="nav-btn" id="exploreBtn">🔍 Explore</button>
+            <button class="nav-btn" id="quizBtn">🧠 Phishing Quiz</button>
         </div>
         
         <div class="nav-right">
@@ -126,6 +127,19 @@
                 </div>
             </div>
         </div>
+        <div id="quizContainer" class="hidden">
+            <h2>🕵️ Spot the Phish</h2>
+            <p id="quizProgress"></p>
+
+            <div id="quizGame" style="position: relative; display: inline-block;">
+                <img id="quizImage" width="600">
+            </div>
+
+            <div id="quizFeedback"></div>
+
+            <button id="nextQuizBtn">Next Challenge</button>
+            <button id="quitQuizBtn">Quit</button>
+            </div>
     </main>
 
     <!-- Login Modal -->
