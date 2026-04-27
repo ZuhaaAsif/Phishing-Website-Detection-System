@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",
-    "axios": "^1.14.0",
+    "axios": "^1.15.2",
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -21,9 +22,11 @@
     "express-rate-limit": "^7.0.0",
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.0",
-    "prisma": "^6.5.0"
+    "prisma": "^6.5.0",
+    "validator": "^13.15.35",
+    "whois-json": "^2.0.4"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"

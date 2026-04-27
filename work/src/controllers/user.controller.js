@@ -27,7 +27,11 @@ const create = async (req, res, next) => {
     const user = await userService.createUser(req.body);
     res.status(201).json({ success: true, data: user });
   } catch (err) {
+    // Handle specific errors
     if (err.message === "Email already in use") {
+      return res.status(409).json({ success: false, error: err.message });
+    }
+    if (err.message === "Username already taken") {
       return res.status(409).json({ success: false, error: err.message });
     }
     next(err);

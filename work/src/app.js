@@ -11,10 +11,11 @@ const reviewRoutes = require("./routes/reviews.routes");
 const websiteRoutes = require("./routes/websites.routes");
 const analysisRoutes = require("./routes/analysis");
 const userRoutes = require("./routes/user.routes");
-const quizRoutes = require("./routes/quiz.routes");
 const { notFound, errorHandler } = require("./middleware/error.middleware");
+const frontendAnalysisRoutes = require("./routes/frontendAnalysis.routes");
 
 const app = express();
+app.use(express.urlencoded({ extended: true }));
 
 // ── Security & utilities ──────────────────────────────────
 app.use(helmet());
@@ -41,9 +42,18 @@ app.use("/api/users", userRoutes);
 app.use("/api/websites", websiteRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api", analysisRoutes);
-app.use("/api/quiz", quizRoutes);
+app.use("/api/frontend", frontendAnalysisRoutes);
 
-// ── Error handling (must be last) ────────────────────────
+// Serve static files from public directory
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Handle SPA routing - serve index.html for all other routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// ── Error handling ────────────────────────
 app.use(notFound);
 app.use(errorHandler);
 
