@@ -3,22 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebAware - User Reviews</title>
+    <title>WebAware - Post a Review</title>
     <link rel="stylesheet" href="/css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- Blurred Background -->
+    <div class="reviews-blur-bg"></div>
+
     <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="nav-left">
-            <a href="/" class="nav-icon" id="homeBtn">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-5v-8H7v8H5a2 2 0 0 1-2-2z"/>
-                </svg>
+            <a href="/" class="home-icon-wrapper" id="homeBtn">
+                <span class="home-icon-outline" id="homeIconOutline">🏠</span>
+                <span class="home-icon-emoji hidden" id="homeIconEmoji">🏠✨</span>
             </a>
             <button class="nav-btn" id="postReviewBtnNav">✍️ Post a Review</button>
-            <button class="nav-btn" id="exploreBtn">🔍 Explore</button>
+            <button class="nav-btn" id="exploreBtnNav">🔍 Explore</button>
         </div>
         
         <div class="nav-right">
@@ -59,49 +61,46 @@
 
     <!-- Main Content -->
     <main class="reviews-main-content">
-        <div class="reviews-page-container">
-            <!-- Add Review Section -->
-            <div class="add-review-page-section">
-                <button id="addReviewMainBtn" class="add-review-main-btn">
-                    <div class="plus-icon-large">+</div>
-                    <span class="add-review-text">Add a Review</span>
-                </button>
-            </div>
-
-            <!-- My Reviews Section -->
-            <div id="myReviewsSection" class="my-reviews-section hidden">
-                <h2 class="section-title">
-                    <i class="fas fa-star"></i> My Reviews
-                </h2>
-                <div id="myReviewsList" class="reviews-grid"></div>
-            </div>
-
-            <!-- All Reviews Section -->
-            <div id="allReviewsSection" class="all-reviews-section">
-                <h2 class="section-title">
-                    <i class="fas fa-users"></i> Community Reviews
-                </h2>
-                <div id="allReviewsList" class="reviews-grid"></div>
-            </div>
+        <!-- Centered + Button -->
+        <div class="centered-add-button" id="centeredAddButton">
+            <button class="floating-add-btn" id="floatingAddBtn">
+                <div class="floating-plus">+</div>
+                <span class="floating-text">Add a Review</span>
+            </button>
         </div>
-    </main>
 
-    <!-- Review Modal -->
-    <div id="reviewModal" class="modal hidden">
-        <div class="modal-content" style="max-width: 500px;">
-            <span class="modal-close">&times;</span>
-            <div style="padding: 20px;">
-                <h2 style="color: #667eea; margin-bottom: 20px;">✍️ Post a Review</h2>
-                <form id="reviewForm">
-                    <div class="form-group">
-                        <label for="reviewWebsiteUrl">Website URL *</label>
-                        <input type="url" id="reviewWebsiteUrl" class="form-input" placeholder="https://example.com" required>
-                        <small>Enter the full URL of the website you want to review</small>
+        <!-- Review Form Modal (centered popup) -->
+        <div id="reviewFormModal" class="review-form-modal hidden">
+            <div class="review-form-card">
+                <div class="form-header">
+                    <div class="header-oval">
+                        <h2 class="form-main-title">Review a Website</h2>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="reviewRating">Rating *</label>
-                        <div class="rating-stars">
+                    <button class="close-form-btn" id="closeFormBtn">&times;</button>
+                </div>
+
+                <form id="reviewForm" class="review-form">
+                    <!-- Anonymous Toggle -->
+                    <div class="form-field toggle-field">
+                        <label class="field-label">I want to stay Anonymous</label>
+                        <div class="toggle-switch" id="anonymousToggle">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+
+                    <div class="separator"></div>
+
+                    <!-- Website Field -->
+                    <div class="form-field">
+                        <label class="field-label">Website</label>
+                        <input type="url" id="reviewWebsiteUrl" class="field-input" 
+                               placeholder="https://example.com" required>
+                    </div>
+
+                    <!-- Rating Field -->
+                    <div class="form-field">
+                        <label class="field-label">Rating</label>
+                        <div class="rating-input">
                             <i class="far fa-star" data-rating="1"></i>
                             <i class="far fa-star" data-rating="2"></i>
                             <i class="far fa-star" data-rating="3"></i>
@@ -110,14 +109,67 @@
                         </div>
                         <input type="hidden" id="reviewRating" required>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="reviewText">Your Review</label>
-                        <textarea id="reviewText" class="form-input" rows="4" placeholder="Share your experience with this website..."></textarea>
+
+                    <!-- Review Field -->
+                    <div class="form-field">
+                        <label class="field-label">Review</label>
+                        <textarea id="reviewText" class="field-textarea" 
+                                  rows="4" placeholder="Share your experience with this website..."></textarea>
                     </div>
-                    
-                    <button type="submit" class="auth-btn" style="width: 100%;">Submit Review</button>
+
+                    <div class="separator"></div>
+
+                    <!-- Privacy Policy Toggle -->
+                    <div class="form-field toggle-field">
+                        <label class="field-label">
+                            I have read and understood WebAware's 
+                            <a href="#" id="privacyPolicyLink" class="privacy-link">Privacy Policy</a>
+                        </label>
+                        <div class="toggle-switch" id="privacyToggle">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="submit-container">
+                        <button type="submit" class="submit-review-btn" id="submitBtn" disabled>
+                            <span class="btn-text">Submit Review</span>
+                            <span class="btn-icon">✨</span>
+                        </button>
+                    </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- Reviews Display Section (always visible behind) -->
+        <div class="reviews-display-section">
+            <div class="reviews-header">
+                <h2 class="section-title">
+                    <i class="fas fa-star"></i> My Reviews
+                </h2>
+            </div>
+            <div id="reviewsList" class="reviews-list">
+                <!-- Reviews will be displayed here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Privacy Policy Modal -->
+    <div id="privacyModal" class="modal">
+        <div class="modal-content privacy-modal">
+            <span class="modal-close">&times;</span>
+            <div class="modal-body">
+                <h2>Privacy Policy</h2>
+                <div class="privacy-content">
+                    <h3>1. Information We Collect</h3>
+                    <p>We collect information you provide directly to us, such as when you create an account, post a review, or communicate with us.</p>
+                    <h3>2. How We Use Your Information</h3>
+                    <p>We use the information to provide, maintain, and improve our services.</p>
+                    <h3>3. Anonymous Reviews</h3>
+                    <p>When you enable anonymous mode, your username will not be displayed with your review.</p>
+                    <h3>4. Data Security</h3>
+                    <p>We implement appropriate security measures to protect your information.</p>
+                </div>
             </div>
         </div>
     </div>

@@ -54,7 +54,58 @@
   </style>
 </head>
 <body>
-
+   <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="/" class="home-icon-wrapper" id="homeBtn">
+                <span class="home-icon-outline" id="homeIconOutline">🏠</span>
+                <span class="home-icon-emoji hidden" id="homeIconEmoji">🏠✨</span>
+            </a>
+            <button class="nav-btn" id="postReviewBtn">✍️ Post a Review</button>
+            <button class="nav-btn" id="exploreBtn">🔍 Explore</button>
+            <button class="nav-btn" id="quizBtn">🧠 Phishing Quiz</button>
+        </div>
+        
+        <div class="nav-right">
+            <!-- User Info (hidden when logged out) -->
+            <div id="userInfo" class="user-info hidden">
+                <div class="profile-trigger" id="profileTrigger">
+                    <div class="profile-avatar" id="profileAvatar">
+                        <span id="avatarText"></span>
+                    </div>
+                    <span id="userName"></span>
+                    <i class="fas fa-chevron-down" style="font-size: 12px; margin-left: 5px;"></i>
+                </div>
+                
+                <!-- Dropdown Menu -->
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="dropdown-header">
+                        <div class="dropdown-avatar" id="dropdownAvatar">
+                            <span id="dropdownAvatarText"></span>
+                        </div>
+                        <div class="dropdown-user-info">
+                            <div class="dropdown-username" id="dropdownUsername"></div>
+                            <div class="dropdown-email" id="dropdownEmail"></div>
+                        </div>
+                    </div>
+                    <hr class="dropdown-divider">
+                    <button class="dropdown-item" id="myReviewsBtn">
+                        <i class="fas fa-star"></i> My Reviews
+                    </button>
+                    <button class="dropdown-item" id="settingsBtn">
+                        <i class="fas fa-cog"></i> Settings
+                    </button>
+                    <hr class="dropdown-divider">
+                    <button class="dropdown-item logout-item" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Sign In Button (visible when logged out) -->
+            <button class="nav-btn signin-btn" id="signInBtn">Sign In</button>
+        </div>
+    </nav>
 <h2>Spot the Phish 🕵️</h2>
 <p id="progress"></p>
 

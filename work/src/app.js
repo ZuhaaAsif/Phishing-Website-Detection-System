@@ -31,7 +31,6 @@ app.use(
 );
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // ── Health check ──────────────────────────────────────────
 app.get("/health", (_req, res) =>

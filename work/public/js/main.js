@@ -33,10 +33,50 @@ let selectedRating = 0;
 let currentDomain = null;
 let quizData = [];
 
+// ======================== HOME ICON ANIMATION ========================
+function setActiveTab() {
+    const currentPage = window.location.pathname;
+    const postReviewBtn = document.getElementById('postReviewBtn');
+    const exploreBtn = document.getElementById('exploreBtn');
+    const homeIconOutline = document.getElementById('homeIconOutline');
+    const homeIconEmoji = document.getElementById('homeIconEmoji');
+    
+    if (postReviewBtn) postReviewBtn.classList.remove('active');
+    if (exploreBtn) exploreBtn.classList.remove('active');
+    
+    if (currentPage === '/' || currentPage === '/index.html') {
+        if (homeIconOutline && homeIconEmoji) {
+            homeIconOutline.classList.remove('hidden');
+            homeIconEmoji.classList.add('hidden');
+        }
+    } else if (currentPage === '/reviews.html') {
+        if (postReviewBtn) postReviewBtn.classList.add('active');
+        if (homeIconOutline && homeIconEmoji) {
+            homeIconOutline.classList.add('hidden');
+            homeIconEmoji.classList.remove('hidden');
+        }
+    } else if (currentPage === '/explore.html') {
+        if (exploreBtn) exploreBtn.classList.add('active');
+        if (homeIconOutline && homeIconEmoji) {
+            homeIconOutline.classList.add('hidden');
+            homeIconEmoji.classList.remove('hidden');
+        }
+    }
+}
+
+// Support for SPA navigation (if any)
+const originalPushState = history.pushState;
+history.pushState = function() {
+    originalPushState.apply(this, arguments);
+    setActiveTab();
+};
+window.addEventListener('popstate', setActiveTab);
+// ====================================================================
 // Check for existing session on load
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthStatus();
     setupReviewForm();
+    setActiveTab();
 });
 
 quizBtn.addEventListener("click", () => {

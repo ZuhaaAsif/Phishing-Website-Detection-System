@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebAware - Advanced Phishing Website Detection</title>
+    <title>WebAware - Explore Reviews</title>
     <link rel="stylesheet" href="/css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,13 +16,11 @@
                 <span class="home-icon-outline" id="homeIconOutline">🏠</span>
                 <span class="home-icon-emoji hidden" id="homeIconEmoji">🏠✨</span>
             </a>
-            <button class="nav-btn" id="postReviewBtn">✍️ Post a Review</button>
-            <button class="nav-btn" id="exploreBtn">🔍 Explore</button>
-            <button class="nav-btn" id="quizBtn">🧠 Phishing Quiz</button>
+            <button class="nav-btn" id="postReviewBtnNav">✍️ Post a Review</button>
+            <button class="nav-btn" id="exploreBtnNav">🔍 Explore</button>
         </div>
         
         <div class="nav-right">
-            <!-- User Info (hidden when logged out) -->
             <div id="userInfo" class="user-info hidden">
                 <div class="profile-trigger" id="profileTrigger">
                     <div class="profile-avatar" id="profileAvatar">
@@ -31,8 +29,6 @@
                     <span id="userName"></span>
                     <i class="fas fa-chevron-down" style="font-size: 12px; margin-left: 5px;"></i>
                 </div>
-                
-                <!-- Dropdown Menu -->
                 <div class="profile-dropdown" id="profileDropdown">
                     <div class="dropdown-header">
                         <div class="dropdown-avatar" id="dropdownAvatar">
@@ -56,89 +52,106 @@
                     </button>
                 </div>
             </div>
-            
-            <!-- Sign In Button (visible when logged out) -->
             <button class="nav-btn signin-btn" id="signInBtn">Sign In</button>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="main-content">
-        <div class="hero-section">
-            <h1 class="site-title">WebAware</h1>
-            <p class="site-tagline">Your Advanced Website Security & Authenticity Checker</p>
-            
-            <div class="search-container">
-                <div class="input-group">
-                    <input 
-                        type="text" 
-                        id="urlInput" 
-                        class="url-input" 
-                        placeholder="Enter website URL (e.g., https://example.com)"
-                        autocomplete="off"
-                    />
-                    <button id="authenticateBtn" class="auth-btn">
-                        <span>Authenticate</span>
-                    </button>
-                </div>
-                <div class="example-urls">
-                    <span>Try examples:</span>
-                    <button class="example-url" data-url="https://google.com">google.com</button>
-                    <button class="example-url" data-url="https://paypal.com">paypal.com</button>
-                    <button class="example-url" data-url="https://github.com">github.com</button>
+    <main class="explore-main-content">
+        <div class="explore-container">
+            <!-- Header -->
+            <div class="explore-header">
+                <h1 class="explore-title">Explore Reviews</h1>
+                <p class="explore-subtitle">Search for any website and see what the community thinks</p>
+            </div>
+
+            <!-- Search Section -->
+            <div class="explore-search-section">
+                <div class="search-wrapper">
+                    <div class="search-input-group">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="searchInput" class="search-input" 
+                               placeholder="Enter website URL or domain (e.g., google.com, https://facebook.com)">
+                        <button id="searchBtn" class="search-btn">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                    <div class="search-examples">
+                        <span>Popular searches:</span>
+                        <button class="example-search" data-domain="google.com">google.com</button>
+                        <button class="example-search" data-domain="github.com">github.com</button>
+                        <button class="example-search" data-domain="paypal.com">paypal.com</button>
+                        <button class="example-search" data-domain="amazon.com">amazon.com</button>
+                    </div>
                 </div>
             </div>
 
             <!-- Loading Indicator -->
             <div id="loadingIndicator" class="loading-indicator hidden">
                 <div class="spinner"></div>
-                <p>Analyzing website...</p>
-                <small>Checking SSL, URL patterns, Google Safe Browsing, and more</small>
+                <p>Searching for reviews...</p>
             </div>
 
-            <!-- Results Container -->
-            <div id="resultsContainer" class="results-container hidden"></div>
-            
-            <!-- Reviews Container -->
-            <div id="reviewsContainer" class="reviews-container hidden">
-                <div class="reviews-header">
-                    <h2>📝 Website Reviews</h2>
+            <!-- Results Section -->
+            <div id="resultsSection" class="results-section hidden">
+                <!-- Website Info Card -->
+                <div id="websiteInfoCard" class="website-info-card">
+                    <div class="website-info-header">
+                        <div class="website-icon">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <div class="website-details">
+                            <h2 id="websiteName" class="website-name">Loading...</h2>
+                            <p id="websiteUrl" class="website-url"></p>
+                        </div>
+                        <div class="website-stats">
+                            <div class="stat">
+                                <span class="stat-value" id="reviewCount">0</span>
+                                <span class="stat-label">Reviews</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" id="avgRating">0.0</span>
+                                <span class="stat-label">Average Rating</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- Add Review Button (only visible when logged in) -->
-                <div id="addReviewSection" class="add-review-section hidden">
-                    <button id="addReviewBtn" class="add-review-btn">
-                        <div class="plus-icon">+</div>
-                        <span>Add a Review</span>
+
+                <!-- Reviews List -->
+                <div class="reviews-section">
+                    <h3 class="reviews-section-title">
+                        <i class="fas fa-comments"></i> Community Reviews
+                    </h3>
+                    <div id="reviewsList" class="reviews-list">
+                        <!-- Reviews will be injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- No Results Section -->
+            <div id="noResultsSection" class="no-results-section hidden">
+                <div class="no-results-content">
+                    <i class="fas fa-search fa-3x"></i>
+                    <h3>No Reviews Found</h3>
+                    <p>We couldn't find any reviews for this website yet.</p>
+                    <button id="postReviewFromExplore" class="post-review-suggestion">
+                        <i class="fas fa-plus"></i> Be the first to post a review
                     </button>
                 </div>
-                
-                <!-- User's Reviews Section -->
-                <div id="userReviewsSection" class="user-reviews-section hidden">
-                    <h3>Your Reviews</h3>
-                    <div id="userReviewsList" class="reviews-list"></div>
-                </div>
-                
-                <!-- All Reviews Section -->
-                <div id="allReviewsSection" class="all-reviews-section">
-                    <h3>Community Reviews</h3>
-                    <div id="allReviewsList" class="reviews-list"></div>
+            </div>
+
+            <!-- Error Section -->
+            <div id="errorSection" class="error-section hidden">
+                <div class="error-content">
+                    <i class="fas fa-exclamation-triangle fa-3x"></i>
+                    <h3>Unable to Load Reviews</h3>
+                    <p id="errorMessage">Please check the website URL and try again.</p>
+                    <button id="retryBtn" class="retry-btn">
+                        <i class="fas fa-redo"></i> Try Again
+                    </button>
                 </div>
             </div>
         </div>
-        <div id="quizContainer" class="hidden">
-            <h2>🕵️ Spot the Phish</h2>
-            <p id="quizProgress"></p>
-
-            <div id="quizGame" style="position: relative; display: inline-block;">
-                <img id="quizImage" style="width:1200px; max-width:100%; display:block; margin:0 auto;">
-            </div>
-
-            <div id="quizFeedback"></div>
-
-            <button id="nextQuizBtn">Next Challenge</button>
-            <button id="quitQuizBtn">Quit</button>
-            </div>
     </main>
 
     <!-- Login Modal -->
@@ -197,50 +210,6 @@
         </div>
     </div>
 
-    <!-- Review Modal -->
-    <div id="reviewModal" class="modal hidden">
-        <div class="modal-content" style="max-width: 500px;">
-            <span class="modal-close">&times;</span>
-            <div style="padding: 20px;">
-                <h2 style="color: #667eea; margin-bottom: 20px;">✍️ Post a Review</h2>
-                <form id="reviewForm">
-                    <div class="form-group">
-                        <label for="reviewWebsiteUrl">Website URL *</label>
-                        <input type="url" id="reviewWebsiteUrl" class="form-input" placeholder="https://example.com" required>
-                        <small>Enter the full URL of the website you want to review</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="reviewRating">Rating *</label>
-                        <div class="rating-stars">
-                            <i class="far fa-star" data-rating="1"></i>
-                            <i class="far fa-star" data-rating="2"></i>
-                            <i class="far fa-star" data-rating="3"></i>
-                            <i class="far fa-star" data-rating="4"></i>
-                            <i class="far fa-star" data-rating="5"></i>
-                        </div>
-                        <input type="hidden" id="reviewRating" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="reviewText">Your Review</label>
-                        <textarea id="reviewText" class="form-input" rows="4" placeholder="Share your experience with this website..."></textarea>
-                    </div>
-                    
-                    <button type="submit" class="auth-btn" style="width: 100%;">Submit Review</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal for Detailed Analysis -->
-    <div id="detailsModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="modal-close">&times;</span>
-            <div id="modalContent"></div>
-        </div>
-    </div>
-
-    <script src="/js/main.js"></script>
+    <script src="/js/explore-page.js"></script>
 </body>
 </html>
