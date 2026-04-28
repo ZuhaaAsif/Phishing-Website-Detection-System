@@ -716,13 +716,138 @@ function resetForms() {
     updateRatingStars(0);
 }
 
+console.log('WebAware frontend loaded successfully');
+
+// ── Paste this block at the bottom of public/js/main.js ──────────────────────
+// It replaces the empty loadQuiz() stub and adds all quiz rendering logic.
+
+// State
+let quizCurrentIndex = 0;
+let quizFoundFlags   = [];   // flag_ids found in the current challenge
+
 function loadQuiz() {
-  fetch("/api/quiz/challenges") // your Express route
+  fetch("/api/quiz/challenges")
     .then(res => res.json())
     .then(data => {
       quizData = data.data || data;
+      quizCurrentIndex = 0;
       startQuiz();
     })
-    .catch(err => console.error(err));
+    .catch(err => {
+      console.error("Quiz load error:", err);
+      document.getElementById("quizContainer").innerHTML =
+        "<p style='color:red'>Failed to load quiz. Check console.</p>";
+    });
 }
-console.log('WebAware frontend loaded successfully');
+
+function startQuiz() {
+  if (!quizData || quizData.length === 0) {
+    document.getElementById("quizContainer").innerHTML =
+      "<p>No quiz challenges found.</p>";
+    return;
+  }
+  renderChallenge();
+}
+
+function renderChallenge() {
+  const challenge = quizData[quizCurrentIndex];
+  quizFoundFlags = [];
+
+  document.getElementById("quizProgress").textContent =
+    `Challenge ${quizCurrentIndex + 1} of ${quizData.length}: ${challenge.title}`;
+
+  document.getElementById("quizFeedback").textContent = "";
+  document.getElementById("quizFeedback").style.cssText = "";
+
+  const game = document.getElementById("quizGame");
+  game.querySelectorAll(".quiz-flag").forEach(el => el.remove());
+
+  // Remove any old image click listener by cloning the element
+  const img = document.getElementById("quizImage");
+  const newImg = img.cloneNode(true);
+  img.parentNode.replaceChild(newImg, img);
+
+  newImg.onload = () => {
+    game.querySelectorAll(".quiz-flag").forEach(el => el.remove());
+
+    // Pre-create hidden highlight overlays for each flag
+    challenge.red_flags.forEach(flag => {
+      const div = document.createElement("div");
+      div.className = "quiz-flag";
+      div.dataset.flagId = flag.flag_id;
+      Object.assign(div.style, {
+        position:       "absolute",
+        border:         "3px solid green",
+        background:     "rgba(0, 200, 0, 0.2)",
+        pointerEvents:  "none",       // invisible to clicks — image handles them
+        display:        "none",       // hidden until correctly clicked
+        left:   (flag.x_percent     / 100) * newImg.clientWidth  + "px",
+        top:    (flag.y_percent     / 100) * newImg.clientHeight + "px",
+        width:  (flag.width_percent  / 100) * newImg.clientWidth  + "px",
+        height: (flag.height_percent / 100) * newImg.clientHeight + "px",
+      });
+      game.appendChild(div);
+    });
+
+    // One click listener on the whole image
+    newImg.style.cursor = "crosshair";
+    newImg.addEventListener("click", (e) => {
+      const rect = newImg.getBoundingClientRect();
+      const xPct = ((e.clientX - rect.left)  / newImg.clientWidth)  * 100;
+      const yPct = ((e.clientY - rect.top)   / newImg.clientHeight) * 100;
+      handleQuizClick(xPct, yPct, challenge, game);
+    });
+  };
+
+  const path = challenge.screenshot_url.replace("/public", "");
+  newImg.src = window.location.origin + path;
+}
+
+function handleQuizClick(xPct, yPct, challenge, game) {
+  const fb = document.getElementById("quizFeedback");
+
+  // Check if click falls inside any flag bounding box
+  const hitFlag = challenge.red_flags.find(flag =>
+    xPct >= flag.x_percent &&
+    xPct <= flag.x_percent + flag.width_percent &&
+    yPct >= flag.y_percent &&
+    yPct <= flag.y_percent + flag.height_percent
+  );
+
+  if (!hitFlag) {
+    fb.textContent = "❌ Nothing suspicious there — keep looking!";
+    fb.style.cssText = "background:#f8d7da;color:#721c24;padding:10px;border-radius:8px;margin-top:12px;";
+    return;
+  }
+
+  if (quizFoundFlags.includes(hitFlag.flag_id)) {
+    fb.textContent = "👀 Already found this one!";
+    fb.style.cssText = "background:#fff3cd;color:#856404;padding:10px;border-radius:8px;margin-top:12px;";
+    return;
+  }
+
+  // Correct new find — reveal the highlight overlay
+  quizFoundFlags.push(hitFlag.flag_id);
+  const overlay = game.querySelector(`.quiz-flag[data-flag-id="${hitFlag.flag_id}"]`);
+  if (overlay) overlay.style.display = "block";
+
+  fb.textContent = `✅ ${hitFlag.label}: ${hitFlag.explanation || ""}`;
+  fb.style.cssText = "background:#d4edda;color:#155724;padding:10px;border-radius:8px;margin-top:12px;";
+
+  if (quizFoundFlags.length === challenge.red_flags.length) {
+    fb.textContent += "  🎉 All flags found!";
+  }
+}
+
+// Wire up Next / Quit buttons (already in HTML, just override handlers)
+document.getElementById("nextQuizBtn").addEventListener("click", () => {
+  if (quizCurrentIndex < quizData.length - 1) {
+    quizCurrentIndex++;
+    renderChallenge();
+  } else {
+    // Quiz complete
+    quizContainer.classList.add("hidden");
+    mainContent.style.display = "";
+    showToast("🛡️ Quiz complete! Great job spotting those phishing attempts.", "success");
+  }
+});

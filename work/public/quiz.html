@@ -66,7 +66,7 @@
 
 <br>
 <button onclick="nextChallenge()">Next Challenge</button>
-<button onclick="nextChallenge()">Skip / See Solution</button>
+<button onclick="skipChallenge()">Skip / See Solution</button>
 
 <div id="badge">
   <h2>🎉 You Passed!</h2>
@@ -78,19 +78,20 @@ let challenges = [];
 let current = 0;
 let foundFlags = [];
 
-// Fetch from backend
-fetch("http://localhost:3000/api/quiz/challenges")
+// Use the current page origin instead of a hardcoded localhost URL
+fetch(window.location.origin + "/api/quiz/challenges")
   .then(res => res.json())
   .then(data => {
-    challenges = data;
+    challenges = data.data || data;
     loadChallenge();
   })
-  .catch(err => console.error(err));
+  .catch(err => console.error("Failed to load challenges:", err));
 
 function loadChallenge() {
   const container = document.getElementById("container");
   const img = document.getElementById("challengeImage");
 
+  // Clear any existing flag overlays
   container.querySelectorAll(".flag").forEach(e => e.remove());
 
   foundFlags = [];
@@ -100,64 +101,55 @@ function loadChallenge() {
   document.getElementById("progress").innerText =
     `Challenge ${current + 1} of ${challenges.length}`;
 
- img.onload = () => {
-  challenge.red_flags.forEach(flag => {
-    const div = document.createElement("div");
-    div.classList.add("flag");
+  // Only render flag hotspots AFTER the image has fully loaded
+  // so that clientWidth/clientHeight reflect the real rendered size
+  img.onload = () => {
+    // Clear again in case onload fires more than once (e.g. cached images)
+    container.querySelectorAll(".flag").forEach(e => e.remove());
 
-    const imgWidth = img.clientWidth;
-    const imgHeight = img.clientHeight;
+    challenge.red_flags.forEach(flag => {
+      const div = document.createElement("div");
+      div.classList.add("flag");
 
-    div.style.left = (flag.x_percent / 100) * imgWidth + "px";
-    div.style.top = (flag.y_percent / 100) * imgHeight + "px";
-    div.style.width = (flag.width_percent / 100) * imgWidth + "px";
-    div.style.height = (flag.height_percent / 100) * imgHeight + "px";
+      const imgWidth = img.clientWidth;
+      const imgHeight = img.clientHeight;
 
-    div.onclick = () => handleClick(flag, div);
+      div.style.left   = (flag.x_percent     / 100) * imgWidth  + "px";
+      div.style.top    = (flag.y_percent     / 100) * imgHeight + "px";
+      div.style.width  = (flag.width_percent  / 100) * imgWidth  + "px";
+      div.style.height = (flag.height_percent / 100) * imgHeight + "px";
 
-    container.appendChild(div);
-  });
-};
+      div.onclick = () => handleClick(flag, div);
+      container.appendChild(div);
+    });
+  };
 
-img.src = "http://localhost:3000" + challenge.screenshot_url.replace("/public", "");  challenge.red_flags.forEach(flag => {
-    const div = document.createElement("div");
-    div.classList.add("flag");
-
-    const imgWidth = img.clientWidth;
-const imgHeight = img.clientHeight;
-
-div.style.left = (flag.x_percent / 100) * imgWidth + "px";
-div.style.top = (flag.y_percent / 100) * imgHeight + "px";
-div.style.width = (flag.width_percent / 100) * imgWidth + "px";
-div.style.height = (flag.height_percent / 100) * imgHeight + "px";
-
-    div.onclick = () => handleClick(flag, div);
-
-    container.appendChild(div);
-  });
+  // Build the image URL from the current origin so it works on any host/port.
+  // The seed stores paths like "/public/images/phish_1.png";
+  // Express serves the public folder at "/", so strip the leading "/public".
+  const screenshotPath = challenge.screenshot_url.replace("/public", "");
+  img.src = window.location.origin + screenshotPath;
 }
 
 function handleClick(flag, element) {
   const feedback = document.getElementById("feedback");
 
-  if (!foundFlags.includes(flag.red_flag_id)) {
-    foundFlags.push(flag.red_flag_id);
+  // flag.flag_id is the correct field name from the API (not flag.red_flag_id)
+  if (!foundFlags.includes(flag.flag_id)) {
+    foundFlags.push(flag.flag_id);
     element.classList.add("found");
 
     feedback.className = "correct";
-    feedback.innerText = flag.explanation;
+    feedback.innerText = "✅ " + flag.explanation;
     feedback.style.display = "block";
+
+    if (foundFlags.length === challenges[current].red_flags.length) {
+      setTimeout(() => alert("🎉 All flags found! Click Next Challenge to continue."), 100);
+    }
   } else {
     feedback.className = "wrong";
     feedback.innerText = "Already found this one!";
     feedback.style.display = "block";
-
-    element.style.animation = "shake 0.3s";
-    setTimeout(() => element.style.animation = "", 300);
-  }
-
-  if (foundFlags.length === challenges[current].red_flags.length) {
-    alert("All flags found!");
   }
 }
 
@@ -169,6 +161,20 @@ function nextChallenge() {
     document.getElementById("container").style.display = "none";
     document.getElementById("badge").style.display = "block";
   }
+}
+
+function skipChallenge() {
+  // Reveal all remaining flags before moving on
+  const challenge = challenges[current];
+  challenge.red_flags.forEach(flag => {
+    if (!foundFlags.includes(flag.flag_id)) {
+      const overlay = document.querySelector(
+        `.flag:nth-child(${challenge.red_flags.indexOf(flag) + 2})`
+      );
+      if (overlay) overlay.classList.add("found");
+    }
+  });
+  nextChallenge();
 }
 </script>
 

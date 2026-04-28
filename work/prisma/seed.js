@@ -14,139 +14,128 @@ const prisma = new PrismaClient();
  * Adjust x_percent / y_percent / width_percent / height_percent to match
  * the actual positions in your challenge screenshots.
  */
+// REPLACE the challenges array at the top with this:
 const challenges = [
   {
-  challenge_order: 1,
-  title: "Fake Bank Login Page",
-  description:
-    "This website claims to be from your bank. Find 3 red flags.",
-  fake_url: "https://m1crosoft-bank-secure.com/login",
-  real_url: "https://microsoft.com",
-  screenshot_url: "/public/images/phish_1.png",
-  difficulty: "easy",
-  red_flags: {
-    create: [
-      {
-        label: "Typo domain",
-        explanation:
-          "The domain uses 'm1crosoft' with a '1' instead of 'i'. This is a common phishing trick.",
-        element_type: "url",
-        x_percent: 5.86,
-        y_percent: 8.79,
-        width_percent: 58.59,
-        height_percent: 15.38,
-      },
-      {
-        label: "Urgent warning banner",
-        explanation:
-          "The message pressures users to act quickly, which is a common phishing tactic.",
-        element_type: "content",
-        x_percent: 14.65,
-        y_percent: 39.56,
-        width_percent: 68.36,
-        height_percent: 26.37,
-      },
-      {
-        label: "Fake brand mismatch",
-        explanation:
-          "Microsoft is not a bank. This mismatch is a clear red flag.",
-        element_type: "logo",
-        x_percent: 12.20,
-        y_percent: 26.37,
-        width_percent: 24.41,
-        height_percent: 21.98,
-      },
-    ],
+    challenge_order: 1,
+    title: "Fake Bank Login Page",
+    description: "This website claims to be from your bank. Find 3 red flags.",
+    fake_url: "https://m1crosoft-bank-secure.com/login",
+    real_url: "https://microsoft.com",
+    screenshot_url: "/images/phish_1.png",
+    difficulty: "easy",
+    red_flags: {
+      create: [
+        {
+          label: "Typo domain",
+          explanation: "The domain uses 'm1crosoft' with a '1' instead of 'i'. This is a common phishing trick.",
+          element_type: "url",
+          x_percent: 0.73,
+          y_percent: 1.33,
+          width_percent: 98.54,
+          height_percent: 6.33,
+        },
+        {
+          label: "Urgent warning banner",
+          explanation: "The message pressures users to act quickly, which is a common phishing tactic.",
+          element_type: "content",
+          x_percent: 8.54,
+          y_percent: 19.67,
+          width_percent: 82.93,
+          height_percent: 20.0,
+        },
+        {
+          label: "Fake brand mismatch",
+          explanation: "Microsoft is not a bank. This mismatch is a clear red flag.",
+          element_type: "logo",
+          x_percent: 0.0,
+          y_percent: 9.0,
+          width_percent: 100.0,
+          height_percent: 8.33,
+        },
+      ],
+    },
   },
-},
   {
-  challenge_order: 2,
-  title: "Email Verification Scam",
-  description:
-    "Verify your email account to continue using services. Find 3 red flags.",
-  fake_url: "https://secure-mail-verification.com/verify",
-  real_url: "https://gmail.com",
-  screenshot_url: "/public/images/phish_2.png",
-  difficulty: "medium",
-  red_flags: {
-    create: [
-      {
-        label: "Suspicious domain",
-        explanation:
-          "The domain is not an official email provider like Gmail or Outlook.",
-        element_type: "url",
-        x_percent: 5.86,
-        y_percent: 12.09,
-        width_percent: 63.48,
-        height_percent: 15.38,
-      },
-      {
-        label: "Urgency message",
-        explanation:
-          "Threatening account lock in 24 hours is a tactic to rush users.",
-        element_type: "content",
-        x_percent: 9.76,
-        y_percent: 42.86,
-        width_percent: 24.41,
-        height_percent: 43.96,
-      },
-      {
-        label: "Asking for password",
-        explanation:
-          "Legitimate services rarely ask you to re-enter your password on random verification pages.",
-        element_type: "form",
-        x_percent: 39.06,
-        y_percent: 42.86,
-        width_percent: 29.30,
-        height_percent: 54.95,
-      },
-    ],
+    challenge_order: 2,
+    title: "Email Verification Scam",
+    description: "Verify your email account to continue using services. Find 3 red flags.",
+    fake_url: "https://secure-mail-verification.com/verify",
+    real_url: "https://gmail.com",
+    screenshot_url: "/images/phish_2.png",
+    difficulty: "medium",
+    red_flags: {
+      create: [
+        {
+          label: "Suspicious domain",
+          explanation: "The domain is not an official email provider like Gmail or Outlook.",
+          element_type: "url",
+          x_percent: 0.73,
+          y_percent: 1.33,
+          width_percent: 98.54,
+          height_percent: 6.33,
+        },
+        {
+          label: "Urgency message",
+          explanation: "Threatening account lock in 24 hours is a tactic to rush users.",
+          element_type: "content",
+          x_percent: 8.54,
+          y_percent: 19.67,
+          width_percent: 82.93,
+          height_percent: 20.0,
+        },
+        {
+          label: "Asking for password",
+          explanation: "Legitimate services rarely ask you to re-enter your password on random verification pages.",
+          element_type: "form",
+          x_percent: 24.15,
+          y_percent: 58.33,
+          width_percent: 51.71,
+          height_percent: 6.33,
+        },
+      ],
+    },
   },
-},
   {
-  challenge_order: 3,
-  title: "Fake Checkout Page",
-  description:
-    "Complete your purchase before the offer expires! Find 3 red flags.",
-  fake_url: "https://amazon-deals-secure-pay.net/checkout",
-  real_url: "https://amazon.com",
-  screenshot_url: "/public/images/phish_3.png",
-  difficulty: "hard",
-  red_flags: {
-    create: [
-      {
-        label: "Fake Amazon domain",
-        explanation:
-          "The domain is not 'amazon.com'. Attackers use similar-looking domains.",
-        element_type: "url",
-        x_percent: 5.86,
-        y_percent: 19.78,
-        width_percent: 63.48,
-        height_percent: 15.38,
-      },
-      {
-        label: "Fake urgency timer",
-        explanation:
-          "Countdown timers create pressure to rush decisions.",
-        element_type: "content",
-        x_percent: 73.24,
-        y_percent: 24.18,
-        width_percent: 21.97,
-        height_percent: 26.37,
-      },
-      {
-        label: "Sensitive payment request",
-        explanation:
-          "The page asks for full credit card details on an untrusted site.",
-        element_type: "form",
-        x_percent: 43.95,
-        y_percent: 41.76,
-        width_percent: 39.06,
-        height_percent: 65.93,
-      },
-    ],
+    challenge_order: 3,
+    title: "Fake Checkout Page",
+    description: "Complete your purchase before the offer expires! Find 3 red flags.",
+    fake_url: "https://amazon-deals-secure-pay.net/checkout",
+    real_url: "https://amazon.com",
+    screenshot_url: "/images/phish_3.png",
+    difficulty: "hard",
+    red_flags: {
+      create: [
+        {
+          label: "Fake Amazon domain",
+          explanation: "The domain is not 'amazon.com'. Attackers use similar-looking domains.",
+          element_type: "url",
+          x_percent: 0.73,
+          y_percent: 1.33,
+          width_percent: 98.54,
+          height_percent: 6.33,
+        },
+        {
+          label: "Fake urgency timer",
+          explanation: "Countdown timers create pressure to rush decisions.",
+          element_type: "content",
+          x_percent: 8.54,
+          y_percent: 19.67,
+          width_percent: 82.93,
+          height_percent: 20.0,
+        },
+        {
+          label: "Sensitive payment request",
+          explanation: "The page asks for full credit card details on an untrusted site.",
+          element_type: "form",
+          x_percent: 21.95,
+          y_percent: 42.33,
+          width_percent: 56.1,
+          height_percent: 51.83,
+        },
+      ],
+    },
   },
-},
 ];
 
 async function main() {
@@ -226,7 +215,7 @@ async function main() {
   for (const challenge of challenges) {
     await prisma.quiz_challenges.upsert({
       where: { challenge_order: challenge.challenge_order },
-      update: {},
+      update: { screenshot_url: challenge.screenshot_url},
       create: challenge,
     });
     console.log(`  ✅ Challenge ${challenge.challenge_order}: "${challenge.title}"`);
