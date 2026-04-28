@@ -19,8 +19,9 @@
                 <span class="home-icon-outline" id="homeIconOutline">🏠</span>
                 <span class="home-icon-emoji hidden" id="homeIconEmoji">🏠✨</span>
             </a>
-            <button class="nav-btn" id="postReviewBtnNav">✍️ Post a Review</button>
-            <button class="nav-btn" id="exploreBtnNav">🔍 Explore</button>
+            <button class="nav-btn" id="postReviewBtn">✍️ Post a Review</button>
+            <button class="nav-btn" id="exploreBtn">🔍 Explore</button>
+            <button class="nav-btn" id="quizBtn">🧠 Phishing Quiz</button>
         </div>
         
         <div class="nav-right">
@@ -179,20 +180,26 @@
         <div class="modal-content" style="max-width: 400px;">
             <span class="modal-close">&times;</span>
             <div style="padding: 20px;">
-                <h2 style="color: #667eea; margin-bottom: 20px;">Sign In</h2>
+                <h2 style="color: #1B7D4F; margin-bottom: 20px;">Sign In</h2>
                 <form id="loginForm">
                     <div class="form-group">
-                        <label for="loginEmail">Email Address</label>
-                        <input type="email" id="loginEmail" class="form-input" required>
+                        <label for="loginEmail">
+                            Email Address <span style="color: #dc3545;">*</span>
+                        </label>
+                        <input type="email" id="loginEmail" class="form-input" 
+                            placeholder="example@email.com" required>
                     </div>
                     <div class="form-group">
-                        <label for="loginPassword">Password</label>
-                        <input type="password" id="loginPassword" class="form-input" required>
+                        <label for="loginPassword">
+                            Password <span style="color: #dc3545;">*</span>
+                        </label>
+                        <input type="password" id="loginPassword" class="form-input" 
+                            placeholder="Enter your password" required>
                     </div>
                     <button type="submit" class="auth-btn" style="width: 100%;">Sign In</button>
                 </form>
                 <div style="text-align: center; margin-top: 15px;">
-                    <p>Don't have an account? <a href="#" id="showRegisterBtn">Register here</a></p>
+                    <p>Don't have an account? <a href="#" id="showRegisterBtn" style="color: #C3A707;">Register here</a></p>
                 </div>
             </div>
         </div>
@@ -203,28 +210,194 @@
         <div class="modal-content" style="max-width: 400px;">
             <span class="modal-close">&times;</span>
             <div style="padding: 20px;">
-                <h2 style="color: #667eea; margin-bottom: 20px;">Create Account</h2>
+                <h2 style="color: #1B7D4F; margin-bottom: 20px;">Create Account</h2>
                 <form id="registerForm">
                     <div class="form-group">
-                        <label for="registerUsername">Username</label>
-                        <input type="text" id="registerUsername" class="form-input" required>
+                        <label for="registerUsername">
+                            Username <span style="color: #dc3545;">*</span>
+                        </label>
+                        <input type="text" id="registerUsername" class="form-input" 
+                            placeholder="Choose a username" required>
                     </div>
                     <div class="form-group">
-                        <label for="registerEmail">Email Address</label>
-                        <input type="email" id="registerEmail" class="form-input" required>
+                        <label for="registerEmail">
+                            Email Address <span style="color: #dc3545;">*</span>
+                        </label>
+                        <input type="email" id="registerEmail" class="form-input" 
+                            placeholder="you@example.com" required>
                     </div>
                     <div class="form-group">
-                        <label for="registerPassword">Password</label>
-                        <input type="password" id="registerPassword" class="form-input" required>
+                        <label for="registerPassword">
+                            Password <span style="color: #dc3545;">*</span>
+                        </label>
+                        <input type="password" id="registerPassword" class="form-input" 
+                            placeholder="Minimum 6 characters" required>
                     </div>
                     <div class="form-group">
-                        <label for="registerConfirmPassword">Confirm Password</label>
-                        <input type="password" id="registerConfirmPassword" class="form-input" required>
+                        <label for="registerConfirmPassword">
+                            Confirm Password <span style="color: #dc3545;">*</span>
+                        </label>
+                        <input type="password" id="registerConfirmPassword" class="form-input" 
+                            placeholder="Re-enter your password" required>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="privacyPolicyAccept" required>
+                            I have read and understood WebAware's 
+                            <a href="#" id="privacyPolicyRegisterLink" style="color: #C3A707;">Privacy Policy</a>
+                            <span style="color: #dc3545;">*</span>
+                        </label>
                     </div>
                     <button type="submit" class="auth-btn" style="width: 100%;">Register</button>
                 </form>
                 <div style="text-align: center; margin-top: 15px;">
-                    <p>Already have an account? <a href="#" id="showLoginBtn">Sign In</a></p>
+                    <p>Already have an account? <a href="#" id="showLoginBtn" style="color: #C3A707;">Sign In</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div id="privacyPolicyModal" class="modal hidden">
+        <div class="modal-content privacy-policy-modal">
+            <div class="privacy-policy-header">
+                <h2><i class="fas fa-shield-alt"></i> Privacy Policy</h2>
+                <span class="modal-close" id="closePrivacyModal">&times;</span>
+            </div>
+            <div class="privacy-policy-content">
+                <div class="policy-section">
+                    <h3>1. Introduction</h3>
+                    <p>Welcome to WebAware ("we," "our," or "us"). We are committed to protecting your privacy and providing a safe online experience. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website security and authenticity checking platform.</p>
+                    <p>By using WebAware, you consent to the data practices described in this policy. If you do not agree with any part of this policy, please do not use our services.</p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>2. Information We Collect</h3>
+                    <p>We collect information that you voluntarily provide to us when you:</p>
+                    <ul>
+                        <li><strong>Create an account:</strong> Username, email address, and password (encrypted)</li>
+                        <li><strong>Post reviews:</strong> Website URLs, ratings, and review content</li>
+                        <li><strong>Authenticate websites:</strong> URLs you choose to analyze</li>
+                        <li><strong>Communicate with us:</strong> Any information you provide in support requests or feedback</li>
+                    </ul>
+                    <p>We also automatically collect certain technical information when you use our platform:</p>
+                    <ul>
+                        <li><strong>Usage data:</strong> Pages visited, features used, time spent on the platform</li>
+                        <li><strong>Device information:</strong> Browser type, operating system, IP address</li>
+                        <li><strong>Cookies:</strong> Small text files stored on your device to enhance user experience</li>
+                    </ul>
+                </div>
+
+                <div class="policy-section">
+                    <h3>3. How We Use Your Information</h3>
+                    <p>We use the information we collect for various purposes:</p>
+                    <ul>
+                        <li><strong>Provide and maintain our service:</strong> Process website security analyses, store reviews, and manage user accounts</li>
+                        <li><strong>Improve our service:</strong> Analyze usage patterns to enhance security detection algorithms and user experience</li>
+                        <li><strong>Communicate with you:</strong> Send important updates, security alerts, and respond to your inquiries</li>
+                        <li><strong>Protect against fraud:</strong> Detect and prevent malicious activities, phishing attempts, and security threats</li>
+                        <li><strong>Display reviews:</strong> Share community reviews (anonymously if you choose) to help others make informed decisions</li>
+                    </ul>
+                </div>
+
+                <div class="policy-section">
+                    <h3>4. Anonymous Reviews Feature</h3>
+                    <p>WebAware offers an anonymous review feature. When you enable this option:</p>
+                    <ul>
+                        <li>Your username will NOT be displayed with your review</li>
+                        <li>Your review will appear as "Anonymous" to other users</li>
+                        <li>We still internally store your identity for moderation purposes</li>
+                        <li>Law enforcement or legal requests may require us to disclose your identity</li>
+                    </ul>
+                </div>
+
+                <div class="policy-section">
+                    <h3>5. Data Security</h3>
+                    <p>We implement robust security measures to protect your information:</p>
+                    <ul>
+                        <li><strong>Encryption:</strong> Passwords are hashed using bcrypt; data transmitted via HTTPS</li>
+                        <li><strong>Access controls:</strong> Strict internal access policies for your personal data</li>
+                        <li><strong>Regular audits:</strong> Periodic security assessments and vulnerability scanning</li>
+                        <li><strong>Secure infrastructure:</strong> Industry-standard security practices and firewalls</li>
+                    </ul>
+                    <p>However, no method of transmission over the Internet is 100% secure. While we strive to protect your data, we cannot guarantee absolute security.</p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>6. Data Retention</h3>
+                    <p>We retain your information for as long as necessary to provide our services:</p>
+                    <ul>
+                        <li><strong>Account information:</strong> Kept until you delete your account or request removal</li>
+                        <li><strong>Reviews:</strong> Remain visible unless you delete them or request removal</li>
+                        <li><strong>Usage data:</strong> Retained for up to 12 months for analytics purposes</li>
+                    </ul>
+                    <p>You may request deletion of your account and associated data at any time.</p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>7. Your Rights</h3>
+                    <p>Depending on your location, you may have the following rights regarding your personal data:</p>
+                    <ul>
+                        <li><strong>Access:</strong> Request a copy of the data we hold about you</li>
+                        <li><strong>Correction:</strong> Request correction of inaccurate or incomplete data</li>
+                        <li><strong>Deletion:</strong> Request deletion of your personal data</li>
+                        <li><strong>Objection:</strong> Object to certain data processing activities</li>
+                        <li><strong>Portability:</strong> Receive your data in a structured, machine-readable format</li>
+                    </ul>
+                    <p>To exercise these rights, please contact us using the information provided below.</p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>8. Third-Party Services</h3>
+                    <p>WebAware integrates with third-party services to enhance functionality:</p>
+                    <ul>
+                        <li><strong>Google Safe Browsing:</strong> URL safety checks (sends URLs you authenticate)</li>
+                        <li><strong>Database services:</strong> PostgreSQL for data storage</li>
+                        <li><strong>Analytics tools:</strong> To understand platform usage (anonymized data)</li>
+                    </ul>
+                    <p>These third parties have their own privacy policies and data handling practices.</p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>9. Children's Privacy</h3>
+                    <p>WebAware is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13. If we discover we have collected such information, we will delete it immediately.</p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>10. Cookies Policy</h3>
+                    <p>We use cookies and similar tracking technologies to:</p>
+                    <ul>
+                        <li>Keep you logged in during your session</li>
+                        <li>Remember your preferences</li>
+                        <li>Analyze site traffic and usage patterns</li>
+                    </ul>
+                    <p>You can control cookies through your browser settings. Disabling cookies may affect certain platform features.</p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>11. Changes to This Privacy Policy</h3>
+                    <p>We may update this Privacy Policy from time to time. We will notify you of any changes by:</p>
+                    <ul>
+                        <li>Posting the new policy on this page</li>
+                        <li>Updating the "Last Updated" date</li>
+                        <li>Sending email notifications for significant changes</li>
+                    </ul>
+                    <p>We encourage you to review this Privacy Policy periodically for any changes.</p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>12. Contact Information</h3>
+                    <p>If you have questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us:</p>
+                    <ul>
+                        <li><strong>Email:</strong> privacy@webaware.com</li>
+                        <li><strong>Address:</strong> WebAware Security, 123 Security Blvd, Cyber City, CC 12345</li>
+                        <li><strong>Response time:</strong> We typically respond within 5-7 business days</li>
+                    </ul>
+                </div>
+
+                <div class="policy-footer">
+                    <p><strong>Last Updated:</strong> January 1, 2024</p>
+                    <p><strong>Version:</strong> 2.0</p>
                 </div>
             </div>
         </div>

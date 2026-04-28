@@ -37,13 +37,23 @@ function setupEventListeners() {
     if (searchBtn) {
         searchBtn.addEventListener('click', () => {
             const query = searchInput.value.trim();
-            if (query) {
-                performSearch(query);
-                // Update URL without reload
-                const url = new URL(window.location);
-                url.searchParams.set('q', query);
-                window.history.pushState({}, '', url);
+            if (!query) {
+                showToast('Please enter a website URL or domain', 'error');
+                return;
             }
+            
+            // Basic URL/domain validation
+            const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+            if (!urlPattern.test(query) && !query.includes('.')) {
+                showToast('Please enter a valid website URL or domain (e.g., google.com)', 'error');
+                return;
+            }
+            
+            performSearch(query);
+            // Update URL without reload
+            const url = new URL(window.location);
+            url.searchParams.set('q', query);
+            window.history.pushState({}, '', url);
         });
     }
     
@@ -52,12 +62,14 @@ function setupEventListeners() {
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const query = searchInput.value.trim();
-                if (query) {
-                    performSearch(query);
-                    const url = new URL(window.location);
-                    url.searchParams.set('q', query);
-                    window.history.pushState({}, '', url);
+                if (!query) {
+                    showToast('Please enter a website URL or domain', 'error');
+                    return;
                 }
+                performSearch(query);
+                const url = new URL(window.location);
+                url.searchParams.set('q', query);
+                window.history.pushState({}, '', url);
             }
         });
     }
@@ -97,8 +109,9 @@ function setupEventListeners() {
     
     // Navigation
     const homeBtn = document.getElementById('homeBtn');
-    const postReviewBtnNav = document.getElementById('postReviewBtnNav');
-    const exploreBtnNav = document.getElementById('exploreBtnNav');
+    const postReviewBtn = document.getElementById('postReviewBtn');
+    const exploreBtn = document.getElementById('exploreBtn');
+    const quizBtn = document.getElementById('quizBtn');
 
     if (homeBtn) {
         homeBtn.addEventListener('click', () => {
@@ -106,14 +119,14 @@ function setupEventListeners() {
         });
     }
     
-    if (postReviewBtnNav) {
-        postReviewBtnNav.addEventListener('click', () => {
+    if (postReviewBtn) {
+        postReviewBtn.addEventListener('click', () => {
             window.location.href = '/reviews.html';
         });
     }
     
-    if (exploreBtnNav) {
-        exploreBtnNav.addEventListener('click', () => {
+    if (exploreBtn) {
+        exploreBtn.addEventListener('click', () => {
             window.location.href = '/explore.html';
         });
     }
@@ -123,6 +136,12 @@ function setupEventListeners() {
         signInBtn.addEventListener('click', () => {
             console.log('Sign In button clicked!');
             showLoginModal();
+        });
+    }
+
+    if (quizBtn) {
+        quizBtn.addEventListener('click', () => {
+            window.location.href = '/quiz.html';
         });
     }
     
@@ -180,54 +199,82 @@ async function performSearch(query) {
     try {
         // Clean the query - extract domain if full URL is provided
         let domain = query;
-        if (query.startsWith('http')) {
+        let fullUrl = query;
+        
+        // Check if it's a valid URL format
+        if (query.startsWith('http://') || query.startsWith('https://')) {
             try {
                 const url = new URL(query);
                 domain = url.hostname;
+                fullUrl = query;
             } catch (e) {
                 domain = query;
             }
         } else {
-            // Remove any path
+            // Check if it looks like a domain
+            const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/;
+            if (!domainRegex.test(query) && !query.includes('.')) {
+                showError('Please enter a valid website URL or domain (e.g., google.com)');
+                showLoading(false);
+                return;
+            }
             domain = query.split('/')[0];
+            fullUrl = `https://${domain}`;
         }
         
+        console.log('Searching for domain:', domain);
         currentDomain = domain;
         
-        // First, get website info
-        const websiteResponse = await fetch(`/api/websites/domain/${encodeURIComponent(domain)}`);
+        // First, try to get website info from database
+        let websiteResponse = await fetch(`/api/websites/domain/${encodeURIComponent(domain)}`);
+        let website = null;
         
-        if (!websiteResponse.ok) {
-            throw new Error('Website not found');
+        if (websiteResponse.ok) {
+            const websiteData = await websiteResponse.json();
+            if (websiteData.success && websiteData.data) {
+                website = websiteData.data;
+                console.log('Website found in database:', website);
+            }
         }
-        
-        const websiteData = await websiteResponse.json();
-        
-        if (!websiteData.success || !websiteData.data) {
-            throw new Error('Website not found');
-        }
-        
-        const website = websiteData.data;
         
         // Get reviews for this website
         const reviewsResponse = await fetch(`/api/reviews/domain/${encodeURIComponent(domain)}`);
         const reviewsData = await reviewsResponse.json();
-        
         const reviews = reviewsData.success ? reviewsData.data : [];
         
-        // Display results
-        displayWebsiteInfo(website, reviews);
-        displayReviews(reviews);
+        console.log(`Found ${reviews.length} reviews for ${domain}`);
         
         if (reviews.length === 0) {
-            showNoResults();
+            // No reviews found - show appropriate message
+            if (website) {
+                // Website exists but no reviews
+                displayWebsiteInfo(website, []);
+                showNoResults('No reviews yet for this website.');
+            } else {
+                // Website doesn't exist at all
+                showNoResults('This website has no reviews yet. Be the first to review it!');
+            }
+            showResults();
         } else {
+            // Reviews found
+            if (website) {
+                displayWebsiteInfo(website, reviews);
+            } else {
+                // Create a temporary website object for display
+                const tempWebsite = {
+                    website_name: domain,
+                    url: fullUrl,
+                    domain: domain
+                };
+                displayWebsiteInfo(tempWebsite, reviews);
+            }
+            displayReviews(reviews);
             showResults();
         }
         
     } catch (error) {
         console.error('Search error:', error);
-        showError(error.message || 'Failed to load reviews. Please try again.');
+        showError('Unable to search. Please check your connection and try again.');
     } finally {
         showLoading(false);
     }
@@ -299,14 +346,31 @@ function showResults() {
     if (resultsSection) resultsSection.classList.remove('hidden');
 }
 
-function showNoResults() {
-    if (noResultsSection) noResultsSection.classList.remove('hidden');
+function showNoResults(message) {
+    if (noResultsSection) {
+        const noResultsContent = noResultsSection.querySelector('.no-results-content');
+        if (noResultsContent) {
+            const messageElement = noResultsContent.querySelector('p');
+            if (messageElement) {
+                messageElement.textContent = message || 'We couldn\'t find any reviews for this website yet.';
+            }
+        }
+        noResultsSection.classList.remove('hidden');
+    }
+    if (resultsSection) resultsSection.classList.add('hidden');
+    if (errorSection) errorSection.classList.add('hidden');
 }
 
 function showError(message) {
     const errorMessageElem = document.getElementById('errorMessage');
-    if (errorMessageElem) errorMessageElem.textContent = message;
-    if (errorSection) errorSection.classList.remove('hidden');
+    if (errorMessageElem) {
+        errorMessageElem.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(message)}`;
+    }
+    if (errorSection) {
+        errorSection.classList.remove('hidden');
+    }
+    if (resultsSection) resultsSection.classList.add('hidden');
+    if (noResultsSection) noResultsSection.classList.add('hidden');
 }
 
 function showLoading(show) {
@@ -427,6 +491,14 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
 // Register Handler
 document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // Check if privacy policy is accepted
+    const privacyAccepted = document.getElementById('privacyPolicyAccept');
+    if (!privacyAccepted || !privacyAccepted.checked) {
+        showToast('Please read and accept the Privacy Policy to continue', 'error');
+        return;
+    }
+
     const username = document.getElementById('registerUsername').value;
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
@@ -534,3 +606,35 @@ window.showRegisterModal = function() {
         console.error('Register modal not found!');
     }
 };
+
+// Privacy Policy Link Handler
+const privacyPolicyLink = document.getElementById('privacyPolicyRegisterLink');
+const privacyPolicyModal = document.getElementById('privacyPolicyModal');
+const closePrivacyModal = document.getElementById('closePrivacyModal');
+
+if (privacyPolicyLink) {
+    privacyPolicyLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (privacyPolicyModal) {
+            privacyPolicyModal.classList.remove('hidden');
+            privacyPolicyModal.classList.add('show');
+        }
+    });
+}
+
+if (closePrivacyModal) {
+    closePrivacyModal.addEventListener('click', () => {
+        if (privacyPolicyModal) {
+            privacyPolicyModal.classList.add('hidden');
+            privacyPolicyModal.classList.remove('show');
+        }
+    });
+}
+
+// Close modal when clicking outside
+window.addEventListener('click', (e) => {
+    if (privacyPolicyModal && e.target === privacyPolicyModal) {
+        privacyPolicyModal.classList.add('hidden');
+        privacyPolicyModal.classList.remove('show');
+    }
+});

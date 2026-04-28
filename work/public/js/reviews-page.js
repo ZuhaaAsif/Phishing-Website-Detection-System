@@ -127,9 +127,9 @@ function setupEventListeners() {
     
     // Navigation
     const postReviewBtnNav = document.getElementById('postReviewBtnNav');
-    const exploreBtnNav = document.getElementById('exploreBtnNav');
+    const exploreBtn = document.getElementById('exploreBtn');
     const homeBtn = document.getElementById('homeBtn');
-    const signInBtn = document.getElementById('signInBtn');
+    const quizBtn = document.getElementById('quizBtn');
 
     if (postReviewBtnNav) {
         postReviewBtnNav.addEventListener('click', () => {
@@ -137,8 +137,8 @@ function setupEventListeners() {
         });
     }
     
-    if (exploreBtnNav) {
-        exploreBtnNav.addEventListener('click', () => {
+    if (exploreBtn) {
+        exploreBtn.addEventListener('click', () => {
             window.location.href = '/explore.html';
         });
     }
@@ -152,6 +152,12 @@ function setupEventListeners() {
     if (signInBtn) {
         signInBtn.addEventListener('click', showLoginModal);
     }
+
+    if (quizBtn) {
+        quizBtn.addEventListener('click', () => {
+        window.location.href = '/quiz.html';
+    });
+}
     
     // Profile dropdown
     const profileTrigger = document.getElementById('profileTrigger');
@@ -566,6 +572,14 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
 // Register Handler
 document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // Check if privacy policy is accepted
+    const privacyAccepted = document.getElementById('privacyPolicyAccept');
+    if (!privacyAccepted || !privacyAccepted.checked) {
+        showToast('Please read and accept the Privacy Policy to continue', 'error');
+        return;
+    }
+    
     const username = document.getElementById('registerUsername').value;
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
@@ -693,3 +707,35 @@ window.showRegisterModal = function() {
         console.error('Register modal not found on reviews page');
     }
 };
+
+// Privacy Policy Link Handler
+const privacyPolicyLink = document.getElementById('privacyPolicyRegisterLink');
+const privacyPolicyModal = document.getElementById('privacyPolicyModal');
+const closePrivacyModal = document.getElementById('closePrivacyModal');
+
+if (privacyPolicyLink) {
+    privacyPolicyLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (privacyPolicyModal) {
+            privacyPolicyModal.classList.remove('hidden');
+            privacyPolicyModal.classList.add('show');
+        }
+    });
+}
+
+if (closePrivacyModal) {
+    closePrivacyModal.addEventListener('click', () => {
+        if (privacyPolicyModal) {
+            privacyPolicyModal.classList.add('hidden');
+            privacyPolicyModal.classList.remove('show');
+        }
+    });
+}
+
+// Close modal when clicking outside
+window.addEventListener('click', (e) => {
+    if (privacyPolicyModal && e.target === privacyPolicyModal) {
+        privacyPolicyModal.classList.add('hidden');
+        privacyPolicyModal.classList.remove('show');
+    }
+});

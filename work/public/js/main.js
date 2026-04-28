@@ -9,12 +9,12 @@ const modal = document.getElementById('detailsModal');
 const postReviewBtn = document.getElementById('postReviewBtn');
 const exploreBtn = document.getElementById('exploreBtn');
 const signInBtn = document.getElementById('signInBtn');
-const reviewsContainer = document.getElementById('reviewsContainer');
-const userReviewsList = document.getElementById('userReviewsList');
-const allReviewsList = document.getElementById('allReviewsList');
-const addReviewSection = document.getElementById('addReviewSection');
-const userReviewsSection = document.getElementById('userReviewsSection');
-const addReviewBtn = document.getElementById('addReviewBtn');
+// const reviewsContainer = document.getElementById('reviewsContainer');
+// const userReviewsList = document.getElementById('userReviewsList');
+// const allReviewsList = document.getElementById('allReviewsList');
+// const addReviewSection = document.getElementById('addReviewSection');
+// const userReviewsSection = document.getElementById('userReviewsSection');
+// const addReviewBtn = document.getElementById('addReviewBtn');
 const profileTrigger = document.getElementById('profileTrigger');
 const profileDropdown = document.getElementById('profileDropdown');
 const avatarText = document.getElementById('avatarText');
@@ -113,12 +113,7 @@ if (profileTrigger) {
 if (myReviewsBtn) {
     myReviewsBtn.addEventListener('click', () => {
         profileDropdown.classList.remove('show');
-        // Scroll to user reviews section
-        if (userReviewsSection && currentDomain) {
-            userReviewsSection.scrollIntoView({ behavior: 'smooth' });
-        } else {
-            showToast('Please analyze a website first to see your reviews', 'info');
-        }
+        showToast('Please analyze a website first to see your reviews', 'info');
     });
 }
 
@@ -196,16 +191,6 @@ function updateUIForLoggedInUser() {
         if (dropdownUsernameElem) dropdownUsernameElem.textContent = displayName;
         if (dropdownEmailElem) dropdownEmailElem.textContent = currentUser.email;
     }
-    
-    // Show add review button
-    if (addReviewSection) {
-        addReviewSection.classList.remove('hidden');
-    }
-    
-    // Load user's reviews if we have a current domain
-    if (currentDomain) {
-        loadUserReviews(currentDomain);
-    }
 }
 
 function updateUIForLoggedOutUser() {
@@ -221,17 +206,6 @@ function updateUIForLoggedOutUser() {
     if (profileDropdown) {
         profileDropdown.classList.remove('show');
     }
-    
-    // Hide add review button
-    if (addReviewSection) {
-        addReviewSection.classList.add('hidden');
-    }
-    
-    // Hide user reviews section
-    if (userReviewsSection) {
-        userReviewsSection.classList.add('hidden');
-    }
-    
     currentUser = null;
 }
 
@@ -254,14 +228,26 @@ homeBtn.addEventListener('click', () => {
 
 // Modal close handlers
 document.querySelectorAll('.modal-close').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.modal').forEach(modal => modal.classList.remove('show'));
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Find the parent modal and close only that one
+        const modalElement = btn.closest('.modal');
+        if (modalElement) {
+            modalElement.classList.remove('show');
+            modalElement.classList.add('hidden');
+            modalElement.style.display = '';
+        }
     });
 });
 
+// Close modal when clicking outside
 window.addEventListener('click', (e) => {
-    document.querySelectorAll('.modal').forEach(modal => {
-        if (e.target === modal) modal.classList.remove('show');
+    document.querySelectorAll('.modal').forEach(modalElement => {
+        if (e.target === modalElement) {
+            modalElement.classList.remove('show');
+            modalElement.classList.add('hidden');
+            modalElement.style.display = '';
+        }
     });
 });
 
@@ -271,25 +257,28 @@ postReviewBtn.addEventListener('click', () => {
 });
 
 exploreBtn.addEventListener('click', () => {
-    showToast('Enter a URL and click Authenticate to see reviews', 'info');
+    window.location.href = '/explore.html';
 });
 
 signInBtn.addEventListener('click', showLoginModal);
 
 document.getElementById('logoutBtn')?.addEventListener('click', logout);
 
-// Add Review Button
-if (addReviewBtn) {
-    addReviewBtn.addEventListener('click', showReviewModal);
-}
-
 // Authentication Modal Handlers
 function showLoginModal() {
-    document.getElementById('loginModal').classList.add('show');
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+        loginModal.classList.remove('hidden');
+        loginModal.classList.add('show');
+    }
 }
 
 function showRegisterModal() {
-    document.getElementById('registerModal').classList.add('show');
+    const registerModal = document.getElementById('registerModal');
+    if (registerModal) {
+        registerModal.classList.remove('hidden');
+        registerModal.classList.add('show');
+    }
 }
 
 // Login Handler
@@ -331,6 +320,14 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
 // Register Handler
 document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // Check if privacy policy is accepted
+    const privacyAccepted = document.getElementById('privacyPolicyAccept');
+    if (!privacyAccepted || !privacyAccepted.checked) {
+        showToast('Please read and accept the Privacy Policy to continue', 'error');
+        return;
+    }
+
     const username = document.getElementById('registerUsername').value;
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
@@ -384,12 +381,6 @@ async function logout() {
     // Close dropdown if open
     if (profileDropdown) {
         profileDropdown.classList.remove('show');
-    }
-    
-    // Reload reviews for current domain (now anonymous)
-    if (currentDomain) {
-        await loadAllReviews(currentDomain);
-        if (userReviewsSection) userReviewsSection.classList.add('hidden');
     }
 }
 
@@ -512,89 +503,6 @@ function updateRatingStars(rating) {
     });
 }
 
-async function loadAllReviews(domain) {
-    if (!domain) return;
-    
-    try {
-        const response = await fetch(`/api/reviews/domain/${encodeURIComponent(domain)}`);
-        if (response.ok) {
-            const data = await response.json();
-            displayAllReviews(data.data || []);
-        }
-    } catch (error) {
-        console.error('Failed to load reviews:', error);
-    }
-}
-
-async function loadUserReviews(domain) {
-    if (!domain || !currentUser) return;
-    
-    try {
-        const response = await fetch(`/api/reviews/domain/${encodeURIComponent(domain)}`);
-        if (response.ok) {
-            const data = await response.json();
-            const userReviews = (data.data || []).filter(r => r.user_id === currentUser.user_id);
-            displayUserReviews(userReviews);
-            
-            if (userReviewsSection) {
-                userReviewsSection.classList[userReviews.length > 0 ? 'remove' : 'add']('hidden');
-            }
-        }
-    } catch (error) {
-        console.error('Failed to load user reviews:', error);
-    }
-}
-
-function displayAllReviews(reviews) {
-    if (!allReviewsList) return;
-    
-    if (!reviews || reviews.length === 0) {
-        allReviewsList.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to review!</div>';
-        return;
-    }
-    
-    allReviewsList.innerHTML = reviews.map(review => `
-        <div class="review-card">
-            <div class="review-header">
-                <div class="reviewer-info">
-                    <div class="reviewer-avatar">${review.users?.username?.charAt(0).toUpperCase() || 'U'}</div>
-                    <div>
-                        <div class="reviewer-name">${escapeHtml(review.users?.username || 'Anonymous')}</div>
-                        <div class="review-date">${new Date(review.created_at || Date.now()).toLocaleDateString()}</div>
-                    </div>
-                </div>
-                <div class="rating-display">${generateStarRating(review.rate)}</div>
-            </div>
-            ${review.review ? `<div class="review-text">${escapeHtml(review.review)}</div>` : ''}
-        </div>
-    `).join('');
-}
-
-function displayUserReviews(reviews) {
-    if (!userReviewsList) return;
-    
-    if (!reviews || reviews.length === 0) {
-        userReviewsList.innerHTML = '<div class="no-reviews">You haven\'t reviewed this website yet</div>';
-        return;
-    }
-    
-    userReviewsList.innerHTML = reviews.map(review => `
-        <div class="review-card">
-            <div class="review-header">
-                <div class="reviewer-info">
-                    <div class="reviewer-avatar">${currentUser?.username?.charAt(0).toUpperCase() || 'U'}</div>
-                    <div>
-                        <div class="reviewer-name">${escapeHtml(currentUser?.username || 'You')}</div>
-                        <div class="review-date">${new Date(review.created_at || Date.now()).toLocaleDateString()}</div>
-                    </div>
-                </div>
-                <div class="rating-display">${generateStarRating(review.rate)}</div>
-            </div>
-            ${review.review ? `<div class="review-text">${escapeHtml(review.review)}</div>` : ''}
-        </div>
-    `).join('');
-}
-
 function generateStarRating(rating) {
     let stars = '';
     for (let i = 1; i <= 5; i++) {
@@ -613,7 +521,6 @@ async function handleAuthentication() {
     
     showLoading(true);
     hideResults();
-    reviewsContainer.classList.add('hidden');
     
     try {
         if (!url.startsWith('http')) url = 'https://' + url;
@@ -630,11 +537,6 @@ async function handleAuthentication() {
             currentAnalysisData = result.data;
             currentDomain = new URL(url).hostname;
             displayResults(result.data);
-            
-            // Load reviews
-            reviewsContainer.classList.remove('hidden');
-            await loadAllReviews(currentDomain);
-            if (currentUser) await loadUserReviews(currentDomain);
         } else {
             throw new Error(result.error);
         }
@@ -650,6 +552,9 @@ function displayResults(data) {
     const riskStatus = data.riskStatus;
     let scoreColor = score >= 70 ? '#00c851' : score >= 40 ? '#ffbb33' : '#ff4444';
     
+    // Store data globally for access
+    window.currentAnalysisData = data;
+
     const html = `
         <div class="score-card">
             <div style="text-align: center;">
@@ -679,34 +584,256 @@ function displayResults(data) {
     
     resultsContainer.innerHTML = html;
     resultsContainer.classList.remove('hidden');
-    
-    document.getElementById('viewDetailsBtn')?.addEventListener('click', () => showDetailedAnalysis());
+
+    const viewDetailsBtn = document.getElementById('viewDetailsBtn');
+    if (viewDetailsBtn) {
+        const newBtn = viewDetailsBtn.cloneNode(true);
+        viewDetailsBtn.parentNode.replaceChild(newBtn, viewDetailsBtn);
+        
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.showDetailedAnalysis();
+        });
+    }
+
     resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-function showDetailedAnalysis() {
-    if (!currentAnalysisData) return;
+window.showDetailedAnalysis = function() {
+    console.log('showDetailedAnalysis called');
+    
+    if (!currentAnalysisData) {
+        showToast('No analysis data available', 'error');
+        return;
+    }
+    
+    const data = currentAnalysisData;
+    const score = data.authenticityScore;
+    
+    // Determine score color and grade
+    let scoreColor = '#dc3545';
+    let scoreGrade = 'Dangerous';
+    let scoreMessage = 'This website shows multiple red flags. Avoid entering personal information.';
+    if (score >= 80) {
+        scoreColor = '#1B7D4F';
+        scoreGrade = 'Excellent';
+        scoreMessage = 'This website appears highly secure and trustworthy.';
+    } else if (score >= 65) {
+        scoreColor = '#28a745';
+        scoreGrade = 'Good';
+        scoreMessage = 'This website is generally safe but exercise normal caution.';
+    } else if (score >= 50) {
+        scoreColor = '#C3A707';
+        scoreGrade = 'Average';
+        scoreMessage = 'This website has some concerns. Verify before proceeding.';
+    } else if (score >= 35) {
+        scoreColor = '#fd7e14';
+        scoreGrade = 'Poor';
+        scoreMessage = 'This website shows suspicious signs. Proceed with caution.';
+    } else {
+        scoreColor = '#dc3545';
+        scoreGrade = 'Critical';
+        scoreMessage = '⚠️ EXTREME CAUTION: This website exhibits multiple phishing indicators!';
+    }
     
     const modalContent = document.getElementById('modalContent');
+    
     modalContent.innerHTML = `
-        <div style="padding: 20px;">
-            <h2 style="color: #667eea;">Detailed Analysis Report</h2>
-            <hr>
-            <h3>URL Information</h3>
-            <p><strong>URL:</strong> ${escapeHtml(currentAnalysisData.url)}</p>
-            <h3>Security Scores</h3>
-            <ul>
-                <li><strong>Overall Score:</strong> ${currentAnalysisData.authenticityScore}/100</li>
-                <li><strong>URL Heuristics:</strong> ${currentAnalysisData.details.urlHeuristics.score}/100</li>
-            </ul>
-            <h3>Detected Issues</h3>
-            ${currentAnalysisData.details.urlHeuristics.issues?.map(i => `<li>${escapeHtml(i)}</li>`).join('') || '<p>No major issues</p>'}
-            <h3>Recommendations</h3>
-            <ul>${currentAnalysisData.recommendations.map(rec => `<li>${escapeHtml(rec)}</li>`).join('')}</ul>
+        <div style="padding: 0;">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #1B7D4F 0%, #066839 100%); padding: 25px; border-radius: 15px 15px 0 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2 style="color: white; margin: 0; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-shield-alt"></i> Detailed Security Analysis
+                        </h2>
+                        <p style="color: rgba(255,255,255,0.8); margin: 10px 0 0 0; font-size: 14px;">
+                            Comprehensive website security report generated by WebAware
+                        </p>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 48px; font-weight: bold; color: white;">${score}</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.8);">out of 100</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="padding: 25px;">
+                <!-- Grade Card -->
+                <div style="background: ${scoreColor}15; border: 2px solid ${scoreColor}; border-radius: 12px; padding: 20px; margin-bottom: 25px; text-align: center;">
+                    <div style="font-size: 14px; color: #666; margin-bottom: 5px;">Security Rating</div>
+                    <div style="font-size: 32px; font-weight: bold; color: ${scoreColor};">${scoreGrade}</div>
+                    <div style="font-size: 14px; color: ${scoreColor}; margin-top: 8px;">${scoreMessage}</div>
+                </div>
+                
+                <!-- URL Information Card -->
+                <div style="background: #212224; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <i class="fas fa-link" style="color: #C3A707;"></i>
+                        <strong style="color: white;">Analyzed URL</strong>
+                    </div>
+                    <code style="background: #494F52; padding: 10px 12px; border-radius: 8px; display: block; word-break: break-all; color: #D9D9D9; font-size: 13px;">
+                        ${escapeHtml(data.url)}
+                    </code>
+                    <div style="display: flex; gap: 20px; margin-top: 12px; font-size: 12px; color: #D9D9D9;">
+                        <span><i class="far fa-calendar-alt"></i> ${new Date(data.analyzedAt).toLocaleString()}</span>
+                        <span><i class="fas fa-chart-line"></i> Real-time Analysis</span>
+                    </div>
+                </div>
+                
+                <!-- Score Breakdown -->
+                <h3 style="color: #C3A707; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-chart-pie"></i> Security Score Breakdown
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                    <div style="background: #212224; border-radius: 10px; padding: 15px; text-align: center;">
+                        <div style="font-size: 28px; font-weight: bold; color: #C3A707;">${data.details.urlHeuristics.score}/100</div>
+                        <div style="font-size: 12px; color: #D9D9D9; margin-top: 5px;">
+                            <i class="fas fa-code-branch"></i> URL Structure
+                        </div>
+                        <div style="font-size: 11px; color: #999; margin-top: 8px;">Analyzes domain patterns, length, special characters</div>
+                    </div>
+                    <div style="background: #212224; border-radius: 10px; padding: 15px; text-align: center;">
+                        <div style="font-size: 28px; font-weight: bold; color: ${data.details.googleSafeBrowsing.status === 'clean' ? '#1B7D4F' : '#dc3545'}">
+                            ${data.details.googleSafeBrowsing.status === 'clean' ? '✅ Clean' : '⚠️ Flagged'}
+                        </div>
+                        <div style="font-size: 12px; color: #D9D9D9; margin-top: 5px;">
+                            <i class="fas fa-shield-virus"></i> Google Safe Browsing
+                        </div>
+                        <div style="font-size: 11px; color: #999; margin-top: 8px;">Cross-referenced with Google's threat database</div>
+                    </div>
+                    <div style="background: #212224; border-radius: 10px; padding: 15px; text-align: center;">
+                        <div style="font-size: 28px; font-weight: bold; color: ${data.authenticityScore >= 60 ? '#1B7D4F' : '#dc3545'}">
+                            ${data.riskStatus}
+                        </div>
+                        <div style="font-size: 12px; color: #D9D9D9; margin-top: 5px;">
+                            <i class="fas fa-flag-checkered"></i> Risk Level
+                        </div>
+                        <div style="font-size: 11px; color: #999; margin-top: 8px;">Overall risk assessment based on all factors</div>
+                    </div>
+                </div>
+                
+                <!-- Detected Issues Section -->
+                <div style="background: #212224; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <i class="fas fa-exclamation-triangle" style="color: ${data.details.urlHeuristics.issues?.length > 0 ? '#C3A707' : '#1B7D4F'};"></i>
+                        <strong style="color: white;">Security Issues Detected</strong>
+                        <span style="background: ${data.details.urlHeuristics.issues?.length > 0 ? '#C3A707' : '#1B7D4F'}; color: white; padding: 2px 10px; border-radius: 20px; font-size: 11px;">
+                            ${data.details.urlHeuristics.issueCount || 0} found
+                        </span>
+                    </div>
+                    ${data.details.urlHeuristics.issues && data.details.urlHeuristics.issues.length > 0 
+                        ? `<div style="display: flex; flex-direction: column; gap: 10px;">
+                            ${data.details.urlHeuristics.issues.map(issue => `
+                                <div style="background: rgba(220, 53, 69, 0.1); border-left: 3px solid #dc3545; padding: 12px; border-radius: 8px;">
+                                    <div style="color: #dc3545; font-weight: 500;">⚠️ Critical Finding</div>
+                                    <div style="color: #D9D9D9; font-size: 13px; margin-top: 5px;">${escapeHtml(issue)}</div>
+                                </div>
+                            `).join('')}
+                          </div>`
+                        : `<div style="background: rgba(27, 125, 79, 0.1); border-left: 3px solid #1B7D4F; padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-check-circle" style="color: #1B7D4F; font-size: 24px;"></i>
+                            <div>
+                                <div style="color: #1B7D4F; font-weight: 500;">No Security Issues Found</div>
+                                <div style="color: #D9D9D9; font-size: 13px;">This website passed all security checks and appears legitimate.</div>
+                            </div>
+                          </div>`
+                    }
+                </div>
+                
+                <!-- Google Safe Browsing Details -->
+                <div style="background: #212224; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <i class="fas fa-google" style="color: #C3A707;"></i>
+                        <strong style="color: white;">Google Safe Browsing Status</strong>
+                    </div>
+                    <div style="background: ${data.details.googleSafeBrowsing.status === 'clean' ? 'rgba(27, 125, 79, 0.1)' : 'rgba(220, 53, 69, 0.1)'}; border-radius: 8px; padding: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            ${data.details.googleSafeBrowsing.status === 'clean' 
+                                ? '<i class="fas fa-shield-alt" style="color: #1B7D4F; font-size: 20px;"></i>' 
+                                : '<i class="fas fa-skull-crossbones" style="color: #dc3545; font-size: 20px;"></i>'}
+                            <div>
+                                <div style="color: white; font-weight: 500;">
+                                    ${data.details.googleSafeBrowsing.status === 'clean' ? 'Not Flagged' : 'Flagged as Malicious'}
+                                </div>
+                                <div style="color: #D9D9D9; font-size: 13px; margin-top: 4px;">
+                                    ${escapeHtml(data.details.googleSafeBrowsing.message)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recommendations Section -->
+                <h3 style="color: #C3A707; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-lightbulb"></i> Security Recommendations
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                    ${data.recommendations.map(rec => {
+                        let icon = 'ℹ️';
+                        let bgColor = 'rgba(195, 167, 7, 0.1)';
+                        let borderColor = '#C3A707';
+                        if (rec.includes('NOT') || rec.includes('not') || rec.includes('Avoid') || rec.includes('Do NOT')) {
+                            icon = '🚫';
+                            bgColor = 'rgba(220, 53, 69, 0.1)';
+                            borderColor = '#dc3545';
+                        } else if (rec.includes('caution') || rec.includes('suspicious')) {
+                            icon = '⚠️';
+                            bgColor = 'rgba(195, 167, 7, 0.1)';
+                            borderColor = '#C3A707';
+                        } else if (rec.includes('safe') || rec.includes('legitimate')) {
+                            icon = '✅';
+                            bgColor = 'rgba(27, 125, 79, 0.1)';
+                            borderColor = '#1B7D4F';
+                        } else if (rec.includes('Always keep')) {
+                            icon = '🔄';
+                        }
+                        return `
+                            <div style="background: ${bgColor}; border-left: 3px solid ${borderColor}; border-radius: 8px; padding: 12px 15px; display: flex; align-items: flex-start; gap: 12px;">
+                                <span style="font-size: 18px;">${icon}</span>
+                                <span style="color: #D9D9D9; line-height: 1.5;">${escapeHtml(rec)}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                
+                <!-- Additional Tips -->
+                <div style="background: linear-gradient(135deg, #1B7D4F20 0%, #06683920 100%); border-radius: 12px; padding: 18px; margin-top: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <i class="fas fa-info-circle" style="color: #C3A707;"></i>
+                        <strong style="color: white;">Pro Tips for Safe Browsing</strong>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #D9D9D9;">
+                            <i class="fas fa-lock" style="color: #1B7D4F;"></i> Always check for HTTPS
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #D9D9D9;">
+                            <i class="fas fa-search" style="color: #1B7D4F;"></i> Verify domain spelling
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #D9D9D9;">
+                            <i class="fas fa-shield-alt" style="color: #1B7D4F;"></i> Use a trusted antivirus
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #D9D9D9;">
+                            <i class="fas fa-clock" style="color: #1B7D4F;"></i> Check domain age (new = suspicious)
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #212224; text-align: center; font-size: 11px; color: #666;">
+                    <i class="fas fa-robot"></i> WebAware Security Scanner v2.0 | Real-time threat detection | Report generated ${new Date().toLocaleString()}
+                </div>
+            </div>
         </div>
     `;
-    modal.classList.add('show');
-}
+    
+    const modalElem = document.getElementById('detailsModal');
+    if (modalElem) {
+        modalElem.classList.remove('hidden');
+        modalElem.classList.add('show');
+        modalElem.style.display = 'flex';
+    }
+};
 
 function escapeHtml(text) {
     if (!text) return '';
@@ -742,7 +869,6 @@ function hideResults() {
 function resetToHome() {
     urlInput.value = '';
     hideResults();
-    reviewsContainer.classList.add('hidden');
     urlInput.focus();
     currentAnalysisData = null;
     currentDomain = null;
@@ -890,4 +1016,36 @@ document.getElementById("nextQuizBtn").addEventListener("click", () => {
     mainContent.style.display = "";
     showToast("🛡️ Quiz complete! Great job spotting those phishing attempts.", "success");
   }
+});
+
+// Privacy Policy Link Handler
+const privacyPolicyLink = document.getElementById('privacyPolicyRegisterLink');
+const privacyPolicyModal = document.getElementById('privacyPolicyModal');
+const closePrivacyModal = document.getElementById('closePrivacyModal');
+
+if (privacyPolicyLink) {
+    privacyPolicyLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (privacyPolicyModal) {
+            privacyPolicyModal.classList.remove('hidden');
+            privacyPolicyModal.classList.add('show');
+        }
+    });
+}
+
+if (closePrivacyModal) {
+    closePrivacyModal.addEventListener('click', () => {
+        if (privacyPolicyModal) {
+            privacyPolicyModal.classList.add('hidden');
+            privacyPolicyModal.classList.remove('show');
+        }
+    });
+}
+
+// Close modal when clicking outside
+window.addEventListener('click', (e) => {
+    if (privacyPolicyModal && e.target === privacyPolicyModal) {
+        privacyPolicyModal.classList.add('hidden');
+        privacyPolicyModal.classList.remove('show');
+    }
 });
