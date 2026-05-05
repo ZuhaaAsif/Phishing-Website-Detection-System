@@ -145,6 +145,16 @@ class AnalysisService {
     }
   }
 
+  async checkWebsiteExists(domain) {
+    const dns = require('dns').promises;
+    try {
+        await dns.lookup(domain);
+        return true;
+    } catch {
+        return false;
+    }
+  }
+
   // Generate recommendations based on risk status and findings
   generateRecommendations(riskStatus, issues) {
     const recommendations = [];

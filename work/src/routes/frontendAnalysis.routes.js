@@ -10,7 +10,6 @@ router.post("/authenticate",
     body("url").trim().isURL().withMessage("Please provide a valid URL"),
     async (req, res, next) => {
         try {
-            // Check validation errors
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 return res.status(400).json({ 
@@ -21,17 +20,14 @@ router.post("/authenticate",
 
             let { url } = req.body;
             
-            // Ensure URL has protocol
             if (!url.startsWith('http://') && !url.startsWith('https://')) {
                 url = 'https://' + url;
             }
             
             console.log(`🔍 Analyzing website for frontend: ${url}`);
             
-            // Use your existing analysis service
             const analysisResult = await analysisService.analyzeWebsite(url);
             
-            // Transform response for frontend display
             const frontendResponse = {
                 success: true,
                 data: {
@@ -68,5 +64,53 @@ router.post("/authenticate",
         }
     }
 );
+
+// ONLY ONE check-exists endpoint - NO DNS, just simple fetch
+router.post("/check-exists", async (req, res) => {
+    try {
+        const { url } = req.body;
+        
+        if (!url) {
+            return res.status(400).json({ success: false, error: "URL is required" });
+        }
+        
+        // Simple URL validation
+        let cleanUrl = url;
+        if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+            cleanUrl = 'https://' + cleanUrl;
+        }
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        try {
+            const response = await fetch(cleanUrl, {
+                method: 'HEAD',
+                signal: controller.signal,
+                redirect: 'follow'
+            });
+            
+            clearTimeout(timeoutId);
+            
+            // Website exists if status is 200-399
+            const exists = response.status >= 200 && response.status < 400;
+            
+            res.json({
+                success: true,
+                exists: exists,
+                status: response.status
+            });
+        } catch (fetchError) {
+            clearTimeout(timeoutId);
+            // Website doesn't exist or is unreachable
+            res.json({
+                success: true,
+                exists: false
+            });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
 
 module.exports = router;

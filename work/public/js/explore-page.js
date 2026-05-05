@@ -204,6 +204,31 @@ async function performSearch(query) {
         console.log('Searching for domain:', domain);
         currentDomain = domain;
         
+        // FIRST: Check if website actually exists on the internet
+        let websiteExists = false;
+        let websiteStatus = null;
+        
+        try {
+            const existsResponse = await fetch('/api/frontend/check-exists', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: fullUrl })
+            });
+            const existsData = await existsResponse.json();
+            websiteExists = existsData.exists;
+            websiteStatus = existsData.status;
+            console.log('Website exists check:', websiteExists, 'Status:', websiteStatus);
+        } catch (error) {
+            console.error('Failed to check website existence:', error);
+        }
+
+        // If website doesn't exist online, show error immediately
+        if (!websiteExists) {
+            showError(`"${domain}" does not appear to be a valid website. Please check the URL and try again.`);
+            showLoading(false);
+            return;
+        }
+
         // Get website info
         let websiteResponse = await fetch(`/api/websites/domain/${encodeURIComponent(domain)}`);
         let website = null;
@@ -233,6 +258,12 @@ async function performSearch(query) {
                 domain: domain
             };
             displayWebsiteInfo(tempWebsite, reviews);
+            // Optional: Silently create it in your database for future
+            await fetch('/api/websites', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ website_name: domain, url: fullUrl, domain: domain })
+            }).catch(e => console.log('Could not auto-create website:', e.message));
         }
         
         // Display reviews

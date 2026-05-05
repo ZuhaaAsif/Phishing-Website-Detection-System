@@ -525,6 +525,26 @@ async function handleAuthentication() {
     try {
         if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
         
+        // First check if website exists
+        try {
+            const existsResponse = await fetch('/api/frontend/check-exists', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url })
+            });
+            const existsData = await existsResponse.json();
+            console.log('Exists check response:', existsData);
+            
+            if (!existsData.exists) {
+                showToast(`Unable to reach "${url}". Please check the URL and try again.`, 'error');
+                showLoading(false);
+                return;
+            }
+        } catch (existsError) {
+            console.error('Exists check failed:', existsError);
+            // Continue anyway - don't block on existence check
+        }
+
         // Validate URL format
         try {
             new URL(url);
