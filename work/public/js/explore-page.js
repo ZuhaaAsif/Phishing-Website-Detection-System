@@ -15,11 +15,10 @@ const postReviewFromExplore = document.getElementById('postReviewFromExplore');
 
 let currentDomain = null;
 let currentUser = null;
+let intendedDestination = null;
 
 // Check auth status on load
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('signInBtn element:', document.getElementById('signInBtn'));
-    console.log('loginModal element:', document.getElementById('loginModal'));
     checkAuthStatus();
     setupEventListeners();
     
@@ -41,16 +40,7 @@ function setupEventListeners() {
                 showToast('Please enter a website URL or domain', 'error');
                 return;
             }
-            
-            // Basic URL/domain validation
-            const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-            if (!urlPattern.test(query) && !query.includes('.')) {
-                showToast('Please enter a valid website URL or domain (e.g., google.com)', 'error');
-                return;
-            }
-            
             performSearch(query);
-            // Update URL without reload
             const url = new URL(window.location);
             url.searchParams.set('q', query);
             window.history.pushState({}, '', url);
@@ -88,14 +78,16 @@ function setupEventListeners() {
     
     // Post review suggestion button
     if (postReviewFromExplore) {
-        postReviewFromExplore.addEventListener('click', () => {
+        postReviewFromExplore.onclick = function(e) {
+            e.preventDefault();
             if (currentUser) {
                 window.location.href = '/reviews.html';
             } else {
+                intendedDestination = '/reviews.html';
                 showToast('Please login to post a review', 'info');
                 showLoginModal();
             }
-        });
+        };
     }
     
     // Retry button
@@ -132,16 +124,17 @@ function setupEventListeners() {
     }
     
     if (signInBtn) {
-        console.log('Adding click listener to signInBtn');
-        signInBtn.addEventListener('click', () => {
-            console.log('Sign In button clicked!');
+        console.log('Sign in button found, adding listener');
+        signInBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Sign in button clicked');
             showLoginModal();
         });
     }
 
     if (quizBtn) {
         quizBtn.addEventListener('click', () => {
-            window.location.href = '/quiz.html';
+            window.location.href = '/';
         });
     }
     
@@ -192,40 +185,26 @@ function setupEventListeners() {
 }
 
 async function performSearch(query) {
-    // Hide all sections, show loading
     hideAllSections();
     showLoading(true);
     
     try {
-        // Clean the query - extract domain if full URL is provided
+        // Clean the query - extract domain
         let domain = query;
         let fullUrl = query;
         
-        // Check if it's a valid URL format
-        if (query.startsWith('http://') || query.startsWith('https://')) {
-            try {
-                const url = new URL(query);
-                domain = url.hostname;
-                fullUrl = query;
-            } catch (e) {
-                domain = query;
-            }
-        } else {
-            // Check if it looks like a domain
-            const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/;
-            if (!domainRegex.test(query) && !query.includes('.')) {
-                showError('Please enter a valid website URL or domain (e.g., google.com)');
-                showLoading(false);
-                return;
-            }
-            domain = query.split('/')[0];
-            fullUrl = `https://${domain}`;
-        }
+        // Remove http:// or https:// if present
+        let cleanQuery = query.replace(/^https?:\/\//i, '');
+        // Replace backslashes with forward slashes if present
+        cleanQuery = cleanQuery.replace(/\\/g, '/');
+        // Get domain part (before first slash)
+        domain = cleanQuery.split('/')[0];
+        fullUrl = `https://${domain}`;
         
         console.log('Searching for domain:', domain);
         currentDomain = domain;
         
-        // First, try to get website info from database
+        // Get website info
         let websiteResponse = await fetch(`/api/websites/domain/${encodeURIComponent(domain)}`);
         let website = null;
         
@@ -244,37 +223,29 @@ async function performSearch(query) {
         
         console.log(`Found ${reviews.length} reviews for ${domain}`);
         
-        if (reviews.length === 0) {
-            // No reviews found - show appropriate message
-            if (website) {
-                // Website exists but no reviews
-                displayWebsiteInfo(website, []);
-                showNoResults('No reviews yet for this website.');
-            } else {
-                // Website doesn't exist at all
-                showNoResults('This website has no reviews yet. Be the first to review it!');
-            }
-            showResults();
+        // Display website info
+        if (website) {
+            displayWebsiteInfo(website, reviews);
         } else {
-            // Reviews found
-            if (website) {
-                displayWebsiteInfo(website, reviews);
-            } else {
-                // Create a temporary website object for display
-                const tempWebsite = {
-                    website_name: domain,
-                    url: fullUrl,
-                    domain: domain
-                };
-                displayWebsiteInfo(tempWebsite, reviews);
-            }
+            const tempWebsite = {
+                website_name: domain,
+                url: fullUrl,
+                domain: domain
+            };
+            displayWebsiteInfo(tempWebsite, reviews);
+        }
+        
+        // Display reviews
+        if (reviews.length === 0) {
+            showNoResults('No reviews yet for this website.');
+        } else {
             displayReviews(reviews);
             showResults();
         }
         
     } catch (error) {
         console.error('Search error:', error);
-        showError('Unable to search. Please check your connection and try again.');
+        showError('Unable to search. Please try again.');
     } finally {
         showLoading(false);
     }
@@ -286,7 +257,6 @@ function displayWebsiteInfo(website, reviews) {
     websiteName.textContent = website.website_name || website.domain;
     websiteUrl.textContent = website.url || `https://${website.domain}`;
     
-    // Calculate average rating
     let totalRating = 0;
     reviews.forEach(review => {
         totalRating += review.rate;
@@ -305,23 +275,35 @@ function displayReviews(reviews) {
         return;
     }
     
-    reviewsList.innerHTML = reviews.map(review => `
-        <div class="review-card">
-            <div class="review-card-header">
-                <div class="reviewer-info">
-                    <div class="reviewer-avatar">${(review.users?.username || 'A').charAt(0).toUpperCase()}</div>
-                    <div>
-                        <div class="reviewer-name">${escapeHtml(review.users?.username || 'Anonymous')}</div>
-                        <div class="review-date">${new Date(review.created_at || Date.now()).toLocaleDateString()}</div>
+    let html = '';
+    for (let i = 0; i < reviews.length; i++) {
+        const review = reviews[i];
+        const isAnonymous = review.is_anonymous === true;
+        const username = review.users?.username || 'Anonymous';
+        const displayName = isAnonymous ? 'Anonymous' : username;
+        const avatarLetter = isAnonymous ? 'A' : (username.charAt(0) || 'A').toUpperCase();
+        
+        html += `
+            <div class="review-card">
+                <div class="review-card-header">
+                    <div class="reviewer-info">
+                        <div class="reviewer-avatar">${avatarLetter}</div>
+                        <div>
+                            <div class="reviewer-name">${escapeHtml(displayName)}</div>
+                            <div class="review-date">${new Date(review.created_at || Date.now()).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                    <div class="review-rating">
+                        ${generateStarRating(review.rate)}
                     </div>
                 </div>
-                <div class="review-rating">
-                    ${generateStarRating(review.rate)}
-                </div>
+                ${review.review ? `<div class="review-text">${escapeHtml(review.review)}</div>` : ''}
             </div>
-            ${review.review ? `<div class="review-text">${escapeHtml(review.review)}</div>` : ''}
-        </div>
-    `).join('');
+        `;
+    }
+    
+    reviewsList.innerHTML = html;
+    console.log('Reviews displayed:', reviews.length);
 }
 
 function generateStarRating(rating) {
@@ -343,34 +325,33 @@ function hideAllSections() {
 }
 
 function showResults() {
-    if (resultsSection) resultsSection.classList.remove('hidden');
+    if (resultsSection) {
+        resultsSection.classList.remove('hidden');
+        console.log('Results section shown');
+    }
+    if (noResultsSection) noResultsSection.classList.add('hidden');
+    if (errorSection) errorSection.classList.add('hidden');
 }
 
 function showNoResults(message) {
     if (noResultsSection) {
-        const noResultsContent = noResultsSection.querySelector('.no-results-content');
-        if (noResultsContent) {
-            const messageElement = noResultsContent.querySelector('p');
-            if (messageElement) {
-                messageElement.textContent = message || 'We couldn\'t find any reviews for this website yet.';
-            }
-        }
+        const msgElement = noResultsSection.querySelector('.no-results-content p');
+        if (msgElement) msgElement.textContent = message || 'No reviews yet for this website.';
         noResultsSection.classList.remove('hidden');
+        resultsSection.classList.add('hidden');
+        errorSection.classList.add('hidden');
+        console.log('No results section shown');
     }
-    if (resultsSection) resultsSection.classList.add('hidden');
-    if (errorSection) errorSection.classList.add('hidden');
 }
 
 function showError(message) {
     const errorMessageElem = document.getElementById('errorMessage');
-    if (errorMessageElem) {
-        errorMessageElem.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(message)}`;
-    }
+    if (errorMessageElem) errorMessageElem.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(message)}`;
     if (errorSection) {
         errorSection.classList.remove('hidden');
+        resultsSection.classList.add('hidden');
+        noResultsSection.classList.add('hidden');
     }
-    if (resultsSection) resultsSection.classList.add('hidden');
-    if (noResultsSection) noResultsSection.classList.add('hidden');
 }
 
 function showLoading(show) {
@@ -452,11 +433,20 @@ function updateUIForLoggedOutUser() {
 
 // Modal Functions
 function showLoginModal() {
-    document.getElementById('loginModal').classList.add('show');
+    console.log('showLoginModal called on explore page');
+    const modal = document.getElementById('loginModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+        console.log('Login modal opened');
+    } else {
+        console.error('Login modal not found');
+    }
 }
 
 function showRegisterModal() {
-    document.getElementById('registerModal').classList.add('show');
+    const modal = document.getElementById('registerModal');
+    if (modal) modal.classList.add('show');
 }
 
 // Login Handler
@@ -480,6 +470,12 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
             updateUIForLoggedInUser();
             document.getElementById('loginModal').classList.remove('show');
             showToast('Login successful!', 'success');
+            
+            if (intendedDestination) {
+                const dest = intendedDestination;
+                intendedDestination = null;
+                window.location.href = dest;
+            }
         } else {
             showToast(data.error || 'Login failed', 'error');
         }
@@ -492,7 +488,6 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
 document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Check if privacy policy is accepted
     const privacyAccepted = document.getElementById('privacyPolicyAccept');
     if (!privacyAccepted || !privacyAccepted.checked) {
         showToast('Please read and accept the Privacy Policy to continue', 'error');
@@ -582,30 +577,9 @@ function showToast(message, type) {
 
 console.log('Explore page loaded successfully');
 
-// Make sure modal functions are global
-window.showLoginModal = function() {
-    console.log('showLoginModal called'); // Debug
-    const modal = document.getElementById('loginModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('show');
-        console.log('Modal opened'); // Debug
-    } else {
-        console.error('Login modal not found!');
-    }
-};
-
-window.showRegisterModal = function() {
-    console.log('showRegisterModal called'); // Debug
-    const modal = document.getElementById('registerModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('show');
-        console.log('Register modal opened'); // Debug
-    } else {
-        console.error('Register modal not found!');
-    }
-};
+// Make modal functions global
+window.showLoginModal = showLoginModal;
+window.showRegisterModal = showRegisterModal;
 
 // Privacy Policy Link Handler
 const privacyPolicyLink = document.getElementById('privacyPolicyRegisterLink');
@@ -631,7 +605,6 @@ if (closePrivacyModal) {
     });
 }
 
-// Close modal when clicking outside
 window.addEventListener('click', (e) => {
     if (privacyPolicyModal && e.target === privacyPolicyModal) {
         privacyPolicyModal.classList.add('hidden');

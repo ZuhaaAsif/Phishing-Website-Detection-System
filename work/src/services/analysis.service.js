@@ -34,7 +34,11 @@ class AnalysisService {
     }
     
     // Check 5: Suspicious keywords
-    const suspiciousKeywords = ['login', 'verify', 'secure', 'account', 'update', 'confirm', 'signin'];
+    const suspiciousKeywords = [
+        'login', 'verify', 'secure', 'account', 'update', 'confirm', 'signin',
+        'signin', 'auth', 'authenticate', 'validation', 'security', 'alert',
+        'warning', 'suspension', 'unusual', 'activity', 'verify-now', 'confirm-identity'
+    ];
     suspiciousKeywords.forEach(keyword => {
       if (url.toLowerCase().includes(keyword)) {
         heuristicScore += 10;
@@ -42,11 +46,49 @@ class AnalysisService {
       }
     });
     
-    // Check 6: HTTPS missing (for non-IP URLs)
+    // Check 6: brand impersonation detection
+    const brandKeywords = ['paypal', 'amazon', 'apple', 'microsoft', 'google', 'facebook', 'bank', 'chase', 'wellsfargo', 'paytm', 'ebay', 'netflix'];
+    brandKeywords.forEach(brand => {
+        // Extract the domain without subdomains
+        let domainMatch = url.match(/https?:\/\/([^\/]+)/i);
+        let domain = domainMatch ? domainMatch[1] : '';
+        
+        // Check if brand appears in URL but domain doesn't exactly match the brand
+        const brandInUrl = url.toLowerCase().includes(brand);
+        const isExactMatch = domain.toLowerCase() === `${brand}.com` || 
+                            domain.toLowerCase() === `${brand}.org` ||
+                            domain.toLowerCase() === `${brand}.net` ||
+                            domain.endsWith(`.${brand}.com`);
+        
+        if (brandInUrl && !isExactMatch) {
+            heuristicScore += 15;
+            issues.push(`Suspicious: URL contains brand name "${brand}" but belongs to ${domain}`);
+        }
+    });
+
+    // Check 7: HTTPS missing (for non-IP URLs)
     if (!url.match(/https:\/\//) && !url.match(/https?:\/\/\d+\.\d+\.\d+\.\d+/)) {
       heuristicScore += 15;
       issues.push("Missing HTTPS - connection not secure");
     }
+
+    // Check 8: suspicious TLDs check
+    const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf', '.top', '.xyz', '.club', '.work', '.click', '.loan', '.download', '.stream', '.date', '.men'];
+    suspiciousTLDs.forEach(tld => {
+        if (url.toLowerCase().includes(tld)) {
+            heuristicScore += 10;
+            issues.push(`Uses suspicious top-level domain "${tld}" often used in phishing`);
+        }
+    });
+
+    // Check 9: URL shortener detection
+    const urlShorteners = ['bit.ly', 'tinyurl.com', 'goo.gl', 'ow.ly', 'is.gd', 'buff.ly', 'short.link', 'rb.gy'];
+    urlShorteners.forEach(shortener => {
+        if (url.toLowerCase().includes(shortener)) {
+            heuristicScore += 20;
+            issues.push(`URL shortened via ${shortener} - destination is hidden`);
+        }
+    });
     
     return { 
       score: Math.min(100, heuristicScore), 
@@ -210,37 +252,47 @@ class AnalysisService {
     }
   }
 
-  // Main analysis method - orchestrates everything
-    // Main analysis method - orchestrates everything (UPDATED with external APIs)
-  async analyzeWebsite(url) {
-    // Step 1: Run heuristic analysis with typosquatting detection
-    const heuristic = this.analyzeURLWithTyposquatting(url);
-    
-    // Step 2: Call Google Safe Browsing API
-    const googleResult = await this.checkGoogleSafeBrowsing(url);
-    
-    // Step 3: Prepare external results
-    const externalResults = {
-      googleSafeBrowsing: googleResult,
-      domainAge: null  // You can add WHOIS API later
+  
+    // Main analysis method - orchestrates everything with external APIs
+    async analyzeWebsite(url) {
+      // Step 1: Run heuristic analysis with typosquatting detection
+      const heuristic = this.analyzeURLWithTyposquatting(url);
+      
+      // Step 2: Call Google Safe Browsing API
+      const googleResult = await this.checkGoogleSafeBrowsing(url);
+      
+      // Step 3: Get domain age
+      const domain = this.extractDomain(url);
+      // const domainAgeResult = await this.checkDomainAge(domain);
+
+      // Step 4: Prepare external results
+      const externalResults = {
+        googleSafeBrowsing: googleResult,
+        domainAge: null
     };
-    
-    // Step 4: Calculate score with external API results
+
+    // Step 5: Calculate score with external API results
     let authenticityScore = this.calculateAuthenticityScore(heuristic.score, externalResults);
     
-    // Step 5: Get risk status
+    // Step 6: Get risk status
     const riskStatus = this.getRiskStatus(authenticityScore);
     
-    // Step 6: Generate recommendations
+    // Step 7: Generate recommendations
     let recommendations = this.generateRecommendations(riskStatus, heuristic.issues);
     
-    // Step 7: Add Google-specific recommendation if flagged
+    // Step 8: Add domain age recommendation if needed
+    // if (domainAgeResult && domainAgeResult.is_suspicious) {
+    //     recommendations.push(`⚠️ ${domainAgeResult.message}`);
+    //     recommendations.push("New domains are often used for phishing - verify carefully");
+    // }
+
+    // Step 9: Add Google-specific recommendation if flagged
     if (googleResult && !googleResult.safe) {
       recommendations.unshift(`⚠️ Google Safe Browsing Alert: ${googleResult.message}`);
       recommendations.unshift("This URL has been reported to Google as potentially harmful");
     }
     
-    // Step 8: Return complete analysis
+    // Step 9: Return complete analysis
     return {
       url,
       authenticity_score: authenticityScore,
@@ -262,6 +314,11 @@ class AnalysisService {
           message: googleResult.message,
           threat_type: googleResult.threatType || null
         }
+        // domain_age: domainAgeResult ? {
+        //   age_days: domainAgeResult.age_days,
+        //   is_suspicious: domainAgeResult.is_suspicious,
+        //   message: domainAgeResult.message
+        // } : null
       },
       recommendations,
       analyzed_at: new Date().toISOString()
@@ -270,17 +327,21 @@ class AnalysisService {
 
   // NEW METHOD 1: Extract domain from URL
   extractDomain(url) {
-    try {
-      // Remove protocol (http://, https://)
-      let domain = url.replace(/^https?:\/\//i, '');
-      // Remove path, query, fragment
-      domain = domain.split('/')[0];
-      // Remove port if present
-      domain = domain.split(':')[0];
-      return domain;
-    } catch (error) {
-      return url;
-    }
+      try {
+          // Add https:// if no protocol
+          let cleanUrl = url;
+          if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+              cleanUrl = 'https://' + cleanUrl;
+          }
+          const urlObj = new URL(cleanUrl);
+          return urlObj.hostname;
+      } catch (error) {
+          // If URL parsing fails, try to extract domain manually
+          let domain = url.replace(/^https?:\/\//i, '');
+          domain = domain.split('/')[0];
+          domain = domain.split(':')[0];
+          return domain;
+      }
   }
 
   // NEW METHOD 2: Detect leet speak and typosquatting
@@ -374,6 +435,31 @@ class AnalysisService {
       hasTyposquatting: typosquattingAnalysis.hasTyposquatting,
       domain: typosquattingAnalysis.domain
     };
+  }
+
+  // Domain age check: Use whois-json package (npm install whois-json)
+  async checkDomainAgeSimple(domain) {
+      try {
+          const whois = require('whois-json');
+          const result = await whois(domain);
+          
+          // Parse creation date from whois result
+          const creationMatch = result.creationDate || result.created || result['Creation Date'];
+          if (creationMatch) {
+              const createdDate = new Date(creationMatch);
+              const ageInDays = (Date.now() - createdDate.getTime()) / (1000 * 3600 * 24);
+              
+              return {
+                  age_days: Math.floor(ageInDays),
+                  is_suspicious: ageInDays < 30,
+                  score: ageInDays < 7 ? -30 : ageInDays < 30 ? -15 : 0,
+                  message: ageInDays < 30 ? `Domain is only ${Math.floor(ageInDays)} days old` : `Domain is ${Math.floor(ageInDays)} days old`
+              };
+          }
+          return null;
+      } catch (error) {
+          return null;
+      }
   }
 }
 

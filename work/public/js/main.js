@@ -523,8 +523,17 @@ async function handleAuthentication() {
     hideResults();
     
     try {
-        if (!url.startsWith('http')) url = 'https://' + url;
+        if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
         
+        // Validate URL format
+        try {
+            new URL(url);
+        } catch (e) {
+            showToast('Please enter a valid website URL (e.g., google.com, https://example.com)', 'error');
+            showLoading(false);
+            return;
+        }
+
         const response = await fetch('/api/frontend/authenticate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

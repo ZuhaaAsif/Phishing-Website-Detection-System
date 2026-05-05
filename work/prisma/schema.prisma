@@ -14,6 +14,7 @@ model reviews {
   website_id Int?
   user_id    Int?
   rate       Int?
+  is_anonymous Boolean  @default(false)
   users      users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
   websites   websites? @relation(fields: [website_id], references: [website_id], onDelete: NoAction, onUpdate: NoAction)
 }

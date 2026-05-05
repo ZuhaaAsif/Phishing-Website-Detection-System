@@ -24,6 +24,12 @@ let allReviews = [];
 
 // Check auth status on load
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Reviews page loaded');
+    console.log('Token exists:', !!localStorage.getItem('authToken'));
+    
+    // Force a small delay to ensure token is available
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     await checkAuthStatus();  // Wait for auth to complete
     setupEventListeners();
     setupReviewForm();
@@ -346,7 +352,8 @@ function setupReviewForm() {
                 body: JSON.stringify({ 
                     website_id: websiteId, 
                     rate: rating, 
-                    review: review || null 
+                    review: review || null,
+                    is_anonymous: isAnonymous
                 })
             });
             
@@ -461,35 +468,54 @@ function generateStarRating(rating) {
 // Authentication Functions
 async function checkAuthStatus() {
     const token = localStorage.getItem('authToken');
-    console.log('Checking auth, token exists:', !!token); // Debug
-    if (token) {
-        try {
-            const response = await fetch('/api/users/me', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+    console.log('Checking auth on reviews page, token:', token ? `${token.substring(0, 20)}...` : 'null');
+    
+    if (!token) {
+        console.log('No token found');
+        updateUIForLoggedOutUser();
+        return false;
+    }
+    
+    try {
+        const response = await fetch('/api/users/me', {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('Auth response status:', response.status);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Auth response data:', data);
             
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.data) {
-                    console.log('User logged in:', currentUser.username); // Debug
-                    currentUser = data.data;
-                    updateUIForLoggedInUser();
-                    return true;
-                } else {
-                    localStorage.removeItem('authToken');
-                    updateUIForLoggedOutUser();
-                }
+            if (data.success && data.data) {
+                currentUser = data.data;
+                console.log('User logged in:', currentUser.username);
+                updateUIForLoggedInUser();
+                return true;
             } else {
+                console.log('Auth failed - invalid response');
                 localStorage.removeItem('authToken');
                 updateUIForLoggedOutUser();
+                return false;
             }
-        } catch (error) {
-            console.error('Auth check failed:', error);
+        } else if (response.status === 401) {
+            console.log('Token expired or invalid');
             localStorage.removeItem('authToken');
             updateUIForLoggedOutUser();
+            return false;
+        } else {
+            console.log('Auth error:', response.status);
+            updateUIForLoggedOutUser();
+            return false;
         }
-    } else {
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        localStorage.removeItem('authToken');
         updateUIForLoggedOutUser();
+        return false;
     }
 }
 
@@ -739,3 +765,8 @@ window.addEventListener('click', (e) => {
         privacyPolicyModal.classList.remove('show');
     }
 });
+
+// Debug: Check if token is being preserved
+console.log('=== REVIEWS PAGE DEBUG ===');
+console.log('localStorage token:', localStorage.getItem('authToken') ? 'EXISTS' : 'MISSING');
+console.log('Current user from memory:', currentUser ? currentUser.username : 'null');

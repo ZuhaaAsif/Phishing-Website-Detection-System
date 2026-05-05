@@ -26,7 +26,9 @@ const getReviewById = async (id) =>
   });
 
 /** Create and return a new review. */
-const createReview = async ({ review, website_id, user_id, rate }) => {
+const createReview = async ({ review, website_id, user_id, rate, is_anonymous }) => {
+  console.log('Service: Creating review with:', { review, website_id, user_id, rate, is_anonymous });
+  
   // Validate rating is between 1-5
   if (rate < 1 || rate > 5) {
     const err = new Error("Rating must be between 1 and 5");
@@ -35,28 +37,40 @@ const createReview = async ({ review, website_id, user_id, rate }) => {
   }
 
   // Check if user exists
-  const userExists = await prisma.users.findUnique({ where: { user_id } });
+  const userExists = await prisma.users.findUnique({ 
+    where: { user_id: user_id } 
+  });
   if (!userExists) {
+    console.error(`User not found: ${user_id}`);
     const err = new Error("User not found");
     err.statusCode = 404;
     throw err;
   }
 
   // Check if website exists
-  const websiteExists = await prisma.websites.findUnique({ where: { website_id } });
+  const websiteExists = await prisma.websites.findUnique({ 
+    where: { website_id: website_id } 
+  });
   if (!websiteExists) {
+    console.error(`Website not found: ${website_id}`);
     const err = new Error("Website not found");
     err.statusCode = 404;
     throw err;
   }
 
-  return prisma.reviews.create({
-    data: { review, website_id, user_id, rate },
-    include: {
-      users: { select: { user_id: true, username: true, email: true } },
-      websites: { select: { website_id: true, website_name: true, url: true } }
+  // Create the review with is_anonymous field
+  const created = await prisma.reviews.create({
+    data: { 
+      review: review || null, 
+      website_id, 
+      user_id, 
+      rate,
+      is_anonymous: is_anonymous || false  // Add this field
     }
   });
+  
+  console.log('Review created:', created);
+  return created;
 };
 
 /** Update an existing review; throws if not found. */

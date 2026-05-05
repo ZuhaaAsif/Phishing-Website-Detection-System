@@ -40,6 +40,7 @@ const create = async (req, res, next) => {
       website_id: req.body.website_id,
       rate: req.body.rate,
       user_id: req.user.user_id,
+      is_anonymous: req.body.is_anonymous || false
     };
     const review = await reviewService.createReview(payload);
     res.status(201).json({ success: true, message: "Your review has been recorded", data: review });
