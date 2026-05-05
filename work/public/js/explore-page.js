@@ -134,7 +134,7 @@ function setupEventListeners() {
 
     if (quizBtn) {
         quizBtn.addEventListener('click', () => {
-            window.location.href = '/';
+            window.location.href = '/quiz.html';
         });
     }
     

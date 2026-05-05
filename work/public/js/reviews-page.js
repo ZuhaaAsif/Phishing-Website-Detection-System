@@ -161,9 +161,9 @@ function setupEventListeners() {
 
     if (quizBtn) {
         quizBtn.addEventListener('click', () => {
-        window.location.href = '/quiz.html';
-    });
-}
+            window.location.href = '/quiz.html';
+        });
+    }
     
     // Profile dropdown
     const profileTrigger = document.getElementById('profileTrigger');
@@ -224,7 +224,7 @@ function checkSubmitEnabled() {
     const hasRating = selectedRating > 0;
     
     // Enable submit only if ALL conditions are met
-    if (hasUrl && hasRating && hasReview && privacyAccepted) {
+    if (hasUrl && hasRating && hasReview) {
         submitBtn.disabled = false;
     } else {
         submitBtn.disabled = true;
@@ -279,26 +279,20 @@ function setupReviewForm() {
         
         // Validation checks
         if (!url) {
-            alert('Please enter a website URL'); // Temporary alert
+            // alert('Please enter a website URL'); // Temporary alert
             showToast('❌ Please enter a website URL', 'error');
             return;
         }
         
         if (!rating) {
-            alert('Please select a rating'); // Temporary alert
+            // alert('Please select a rating'); // Temporary alert
             showToast('⭐ Please select a rating (click on the stars)', 'error');
             return;
         }
         
         if (!review) {
-            alert('Please write a review'); // Temporary alert
+            // alert('Please write a review'); // Temporary alert
             showToast('📝 Please write a review', 'error');
-            return;
-        }
-        
-        if (!privacyAccepted) {
-            alert('Please accept the Privacy Policy'); // Temporary alert
-            showToast('📋 Please accept the Privacy Policy to continue', 'error');
             return;
         }
         
@@ -668,7 +662,7 @@ async function logout() {
     currentUser = null;
     updateUIForLoggedOutUser();
     showToast('Logged out successfully', 'success');
-    await loadAllReviews();
+    await loadUserReviews();
 }
 
 function escapeHtml(text) {
@@ -712,27 +706,27 @@ function showToast(message, type) {
 console.log('Reviews page loaded successfully');
 
 // Make sure modal functions are global
-window.showLoginModal = function() {
-    console.log('showLoginModal called from reviews page');
-    const modal = document.getElementById('loginModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('show');
-    } else {
-        console.error('Login modal not found on reviews page');
-    }
-};
+// window.showLoginModal = function() {
+//     console.log('showLoginModal called from reviews page');
+//     const modal = document.getElementById('loginModal');
+//     if (modal) {
+//         modal.classList.remove('hidden');
+//         modal.classList.add('show');
+//     } else {
+//         console.error('Login modal not found on reviews page');
+//     }
+// };
 
-window.showRegisterModal = function() {
-    console.log('showRegisterModal called from reviews page');
-    const modal = document.getElementById('registerModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('show');
-    } else {
-        console.error('Register modal not found on reviews page');
-    }
-};
+// window.showRegisterModal = function() {
+//     console.log('showRegisterModal called from reviews page');
+//     const modal = document.getElementById('registerModal');
+//     if (modal) {
+//         modal.classList.remove('hidden');
+//         modal.classList.add('show');
+//     } else {
+//         console.error('Register modal not found on reviews page');
+//     }
+// };
 
 // Privacy Policy Link Handler
 const privacyPolicyLink = document.getElementById('privacyPolicyRegisterLink');
